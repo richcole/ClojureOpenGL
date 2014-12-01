@@ -1,13 +1,28 @@
 (ns my-stuff.core
-  (:import 
-   [org.lwjgl.opengl Display DisplayMode GL11 GL12 GL13]
-   [org.lwjgl.util.glu GLU]
-   [org.lwjgl BufferUtils]
-   )
-  (:gen-class)
-  )
+  (:import [org.lwjgl.opengl Display DisplayMode GL11 GL12 GL13]
+           [org.lwjgl.util.glu GLU]
+           [org.lwjgl BufferUtils])
+  (:require [clojure.core.async :as async])
+  (:gen-class))
 
-(println (System/getProperty "java.library.path"))
+(defonce queue (new java.util.concurrent.SynchronousQueue))
+
+(defn exec [item]
+  (try (item)
+    (catch Exception e 
+      (println "Caught exception:" (.getMessage e)))))
+
+(defn process-queue [queue]
+  (exec (.take queue)))
+
+(defn run [queue]
+  (while true 
+    (process-queue queue)))
+
+(defonce runner (future (run queue)))
+
+(defn gl-do [f]
+  (.put queue f))
 
 (def display-width 800)
 (def display-height 800)
@@ -32,6 +47,10 @@
   (Display/setDisplayMode display-mode)
   (Display/create)
   )
+
+(defn display-destroy []
+  (Display/destroy)
+)
 
 (defn view-init []
   (GL11/glDisable GL11/GL_TEXTURE_2D)
@@ -74,9 +93,17 @@
   (GL11/glClear (bit-or GL11/GL_COLOR_BUFFER_BIT GL11/GL_DEPTH_BUFFER_BIT))
   )
 
-(defn -main
-  "I don't do a whole lot ... yet."
-  []
+(defn render []
+  (view-clear)
+  (GL11/glBegin GL11/GL_TRIANGLES)
+  (GL11/glVertex3f -1.0  1.0 -10.0)
+  (GL11/glVertex3f  1.0  1.0 -10.0)
+  (GL11/glVertex3f  1.0 -1.0 -10.0)
+  (GL11/glEnd)
+  (Display/update)
+)
+
+(defn main []
   (display-init)
   (view-init)
   (view-persp)
@@ -84,4 +111,6 @@
   )
 
 
-(-main)
+ ; (gl-do (fn [] (Display/destroy)))
+(gl-do main)
+(gl-do render)

@@ -9,9 +9,9 @@
    [org.lwjgl.lwjgl/lwjgl "2.9.0"]
    [org.lwjgl.lwjgl/lwjgl-platform "2.9.0"
     :classifier "natives-linux"
-    :native-prefix ""
-    ]
+    :native-prefix ""]
    [org.lwjgl.lwjgl/lwjgl_util "2.9.0"]
+   [org.clojars.trptcolin/core.async "0.1.242.1"]
    ]
   :main ^:skip-aot my-stuff.core
   :target-path "target/%s"
