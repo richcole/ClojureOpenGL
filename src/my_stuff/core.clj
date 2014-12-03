@@ -1,7 +1,8 @@
 (ns my-stuff.core
   (:import [org.lwjgl.opengl Display DisplayMode GL11 GL12 GL13]
            [org.lwjgl.util.glu GLU]
-           [org.lwjgl BufferUtils])
+           [org.lwjgl BufferUtils]
+           [org.lwjgl.input Keyboard Mouse])
   (:require [clojure.core.async :as async])
   (:gen-class))
 
@@ -18,6 +19,19 @@
 (defn run [queue]
   (while true 
     (process-queue queue)))
+
+(def orig-state 
+  {:pos [0.0 0.0 0.0] 
+   :fwd [0.0 0.0 -1.0] 
+   :up  [0.0 1.0 0.0] 
+   :vel [0.0 0.0 0.0]})
+
+(def state (ref nil))
+
+(defn reset-state []
+  (dosync (ref-set state orig-state)))
+
+(reset-state)
 
 (defonce runner (future (run queue)))
 
@@ -93,8 +107,20 @@
   (GL11/glClear (bit-or GL11/GL_COLOR_BUFFER_BIT GL11/GL_DEPTH_BUFFER_BIT))
   )
 
+(defn vplus [[x1 y1 z1] [x2 y2 z2]]
+  [(+ x1 x2) (+ y1 y2) (+ z1 z2)])
+
+(defn stimes [s [x2 y2 z2]]
+  [(* s x2) (* s y2) (* s z2)])
+
+(defn look-at [x1 x2 x3 x4 x5 x6 x7 x8 x9]
+  (GL11/glLoadIdentity)
+  (GLU/gluLookAt x1 x2 x3 x4 x5 x6 x7 x8 x9))
+
 (defn render []
   (view-clear)
+  (let [{:keys [pos fwd up]} @state]
+    (apply look-at (concat pos (vplus pos fwd) up)))
   (GL11/glBegin GL11/GL_TRIANGLES)
   (GL11/glVertex3f -1.0  1.0 -10.0)
   (GL11/glVertex3f  1.0  1.0 -10.0)
@@ -110,7 +136,28 @@
   (view-clear)
   )
 
+(gl-do (fn [] (println (Keyboard/next))))
 
- ; (gl-do (fn [] (Display/destroy)))
 (gl-do main)
 (gl-do render)
+
+(future (while true (gl-do render)))
+
+(defn tick [dt]
+  (dosync 
+   (ref-set state 
+            (let [{:keys [pos fwd up vel]} @state]
+              (assoc @state 
+                :pos (vplus pos (stimes dt vel))
+                :fwd [0.0 0.0 -1.0] 
+                :up  [0.0 1.0 0.0])))))
+
+(dosync (ref-set state (assoc @state :vel [0.5 0.5 0.0])))
+
+(future (while true (Thread/sleep 1000) (tick 1)))
+
+(reset-state)
+(stimes 1 [1.0 1.0 1.0])
+(tick 1)
+(stimes 1 (:vel @state))
+(println "Hello")
