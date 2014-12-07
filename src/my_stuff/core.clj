@@ -7,6 +7,7 @@
   (:use  my-stuff.gl-thread)
   (:gen-class))
 
+
 (defrecord State 
     [^Vector3f pos 
      ^Vector3f left 
