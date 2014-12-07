@@ -2,11 +2,8 @@
   (:import [java.nio MappedByteBuffer ByteBuffer ByteOrder]
            [java.nio.channels FileChannel FileChannel$MapMode]
            [java.io RandomAccessFile])
-  (:use  defoma.gl-thread)
+  (:use defoma.mmap)
   (:gen-class))
-
-(def file (RandomAccessFile. "/home/richcole/models/trees9/trees9.3ds" "r"))
-(def f (-> file .getChannel (.map FileChannel$MapMode/READ_ONLY 0 (.length file))))
 
 (defn read-u8 [^ByteBuffer f]
   (bit-and (.getByte f) 0xff))
@@ -115,10 +112,12 @@
           (.position f (+ pos offset))
           (assoc fields :id id :pos pos :offset offset :children children))))))
         
-(defn read-3ds [file f]
-  (.rewind f)
-  (.order f ByteOrder/LITTLE_ENDIAN)
-  (read-node f (.length file)))
+(defn read-3ds [mmap-file]
+  (let [f (:buf mmap-file)
+        file (:file mmap-file)]
+    (.rewind f)
+    (.order f ByteOrder/LITTLE_ENDIAN)
+    (read-node f (.length file))))
 
 (declare print-3ds)
 
@@ -128,6 +127,13 @@
     (print-3ds (str "  " indent) child))
   nil)
 
-(print-3ds "" (read-3ds file f))
+(comment
+
+  (def tree (mmap-resource "trees9.3ds"))
+  (print-3ds "" (read-3ds tree))
+
+)
+
+
 
 

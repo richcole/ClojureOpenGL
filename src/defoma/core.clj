@@ -292,6 +292,11 @@
    (reset-state)
 )
 
+(clojure.java.io/copy 
+ (clojure.java.io/input-stream 
+  (clojure.java.io/resource "trees9.3ds"))
+  (clojure.java.io/file "/tmp/trees9.3ds"))
+
 
  
 
