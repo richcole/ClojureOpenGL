@@ -5,7 +5,9 @@
 (defn exec [item]
   (try (item)
     (catch Throwable e 
-      (println "Caught exception:" (.getMessage e)))))
+      (println "Exception throw: " (.getMessage e))
+      (clojure.stacktrace/print-stack-trace e)
+      (println ""))))
 
 (defn process-queue [queue]
   (exec (.take queue)))

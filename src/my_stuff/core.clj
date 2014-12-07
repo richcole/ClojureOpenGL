@@ -1,10 +1,14 @@
 (ns my-stuff.core
-  (:import [org.lwjgl.opengl Display DisplayMode GL11 GL12 GL13]
+  (:import [org.lwjgl.opengl Display DisplayMode GL11 GL12 GL13 GL20]
            [org.lwjgl.util.glu GLU]
            [org.lwjgl BufferUtils]
            [org.lwjgl.input Keyboard Mouse]
            [com.jme3.math Quaternion Vector3f])
-  (:use  my-stuff.gl-thread)
+  (:use  my-stuff.gl-thread
+         my-stuff.shaders
+         my-stuff.images
+         my-stuff.textures
+         )
   (:gen-class))
 
 
@@ -87,9 +91,7 @@
 )
 
 (defn view-init []
-  (GL11/glDisable GL11/GL_TEXTURE_2D)
-  (GL11/glDisable GL11/GL_TEXTURE_2D)
-  (GL11/glEnable GL12/GL_TEXTURE_3D)
+  (GL11/glEnable GL11/GL_TEXTURE_2D)
   (GL11/glShadeModel GL11/GL_SMOOTH)       
   (GL11/glEnable  GL11/GL_BLEND)
   (GL11/glBlendFunc GL11/GL_SRC_ALPHA GL11/GL_ONE_MINUS_SRC_ALPHA)
@@ -138,9 +140,17 @@
   (view-clear)
   (let [{:keys [pos fwd up]} @game-state]
     (look-at pos (vplus pos fwd) up))
+  (GL11/glEnable GL11/GL_TEXTURE_2D)
+  (GL11/glBindTexture GL11/GL_TEXTURE_2D (:id @stone-texture))
   (GL11/glBegin GL11/GL_TRIANGLES)
+
+  (GL11/glTexCoord2f 0 1)
   (GL11/glVertex3f -1.0  1.0 -10.0)
+
+  (GL11/glTexCoord2f 1 1)
   (GL11/glVertex3f  1.0  1.0 -10.0)
+
+  (GL11/glTexCoord2f 1 0)
   (GL11/glVertex3f  1.0 -1.0 -10.0)
   (GL11/glEnd)
   (Display/update)
@@ -243,16 +253,33 @@
     (dosync 
      (ref-set game-state (update-state dt @game-state)))))
 
+(defonce simple-frag-program (ref nil))
+(defonce stone-texture (ref nil))
+
+(defn gl-load-textures []
+  (gl-do
+   (dosync (ref-set stone-texture (load-texture "stone_texture.jpg")))))
+
+(defn gl-compile-shaders []
+  (gl-do 
+   (dosync 
+    (ref-set simple-frag-program
+             (new-program-from-shader-resources 
+              [["simple-frag.glsl" GL20/GL_FRAGMENT_SHADER]])))))
+
 (defn gl-init []
   (gl-do 
    (display-init)
    (view-init)
    (view-persp)
-   (view-clear)))
+   (view-clear)
+))
 
 (defn -main []
   (reset-state)
   (gl-init)
+  (gl-compile-shaders)
+  (gl-load-textures)
   (future (while true (gl-do (render))))
   (future (catch-and-print-ex (while true (tick))))
 )
@@ -263,4 +290,7 @@
    (Mouse/isCreated) 
    (reset-state)
 )
+
+@stone-texture
+ 
 
