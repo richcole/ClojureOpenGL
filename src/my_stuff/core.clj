@@ -2,41 +2,59 @@
   (:import [org.lwjgl.opengl Display DisplayMode GL11 GL12 GL13]
            [org.lwjgl.util.glu GLU]
            [org.lwjgl BufferUtils]
-           [org.lwjgl.input Keyboard Mouse])
-  (:require [clojure.core.async :as async])
+           [org.lwjgl.input Keyboard Mouse]
+           [com.jme3.math Quaternion Vector3f])
+  (:use  my-stuff.gl-thread)
   (:gen-class))
 
-(defonce queue (new java.util.concurrent.SynchronousQueue))
+(defrecord State 
+    [^Vector3f pos 
+     ^Vector3f left 
+     ^Vector3f fwd 
+     ^Vector3f up 
+     ^Vector3f vel 
+     ^Double speed 
+     ^Double mx 
+     ^Double my])
 
-(defn exec [item]
-  (try (item)
-    (catch Exception e 
-      (println "Caught exception:" (.getMessage e)))))
+(defn vector3f [x y z]
+  (Vector3f. x y z))
 
-(defn process-queue [queue]
-  (exec (.take queue)))
+(def ZERO (Vector3f/ZERO))
+(def U0 (Vector3f/UNIT_X))
+(def U1 (Vector3f/UNIT_Y))
+(def U2 (Vector3f/UNIT_Z))
 
-(defn run [queue]
-  (while true 
-    (process-queue queue)))
+(defn vminus 
+  ([^Vector3f v]   (.negate v))
+  ([^Vector3f u ^Vector3f v] (.add u (.negate v))))
 
-(def orig-state 
-  {:pos [0.0 0.0 0.0] 
-   :fwd [0.0 0.0 -1.0] 
-   :up  [0.0 1.0 0.0] 
-   :vel [0.0 0.0 0.0]})
+(defn vplus [^Vector3f u ^Vector3f v] (.add u v))
 
-(def state (ref nil))
+(defn vcross [^Vector3f u ^Vector3f v] (.cross u v))
+
+(defn svtimes [^Float s ^Vector3f u] (.mult u s))
+
+(defn qvtimes [^Quaternion q ^Vector3f u] (.mult q u))
+
+(defn vx [u] (.x u)) 
+(defn vy [u] (.y u)) 
+(defn vz [u] (.z u))
+
+(def initial-state
+  (State. ZERO
+          U0
+          (vminus U2)
+          U1 
+          ZERO
+          10.0
+          0.0
+          0.0))
+
+(defonce game-state (ref initial-state))
 
 (defn reset-state []
-  (dosync (ref-set state orig-state)))
-
-(reset-state)
-
-(defonce runner (future (run queue)))
-
-(defn gl-do [f]
-  (.put queue f))
+  (dosync (ref-set game-state initial-state)))
 
 (def display-width 800)
 (def display-height 800)
@@ -59,6 +77,7 @@
 
 (defn display-init [] 
   (Display/setDisplayMode display-mode)
+  (Display/setVSyncEnabled true)
   (Display/create)
   )
 
@@ -107,20 +126,17 @@
   (GL11/glClear (bit-or GL11/GL_COLOR_BUFFER_BIT GL11/GL_DEPTH_BUFFER_BIT))
   )
 
-(defn vplus [[x1 y1 z1] [x2 y2 z2]]
-  [(+ x1 x2) (+ y1 y2) (+ z1 z2)])
-
-(defn stimes [s [x2 y2 z2]]
-  [(* s x2) (* s y2) (* s z2)])
-
-(defn look-at [x1 x2 x3 x4 x5 x6 x7 x8 x9]
+(defn look-at [^Vector3f eye ^Vector3f at ^Vector3f up]
   (GL11/glLoadIdentity)
-  (GLU/gluLookAt x1 x2 x3 x4 x5 x6 x7 x8 x9))
+  (GLU/gluLookAt 
+   (vx eye) (vy eye) (vz eye) 
+   (vx at ) (vy at ) (vz at ) 
+   (vx up ) (vy up ) (vz up )))
 
 (defn render []
   (view-clear)
-  (let [{:keys [pos fwd up]} @state]
-    (apply look-at (concat pos (vplus pos fwd) up)))
+  (let [{:keys [pos fwd up]} @game-state]
+    (look-at pos (vplus pos fwd) up))
   (GL11/glBegin GL11/GL_TRIANGLES)
   (GL11/glVertex3f -1.0  1.0 -10.0)
   (GL11/glVertex3f  1.0  1.0 -10.0)
@@ -129,35 +145,121 @@
   (Display/update)
 )
 
-(defn main []
-  (display-init)
-  (view-init)
-  (view-persp)
-  (view-clear)
-  )
+(defn get-keyboard-event []
+  (when (Keyboard/next)
+    {:key (Keyboard/getEventKey) :down? (Keyboard/getEventKeyState)}))
 
-(gl-do (fn [] (println (Keyboard/next))))
+(defn get-mouse-event []
+  (when (Mouse/next)
+    {:left-down?   (Mouse/isButtonDown 0) 
+     :middle-down? (Mouse/isButtonDown 1) 
+     :right-down?  (Mouse/isButtonDown 2) 
+     :dx (Mouse/getEventDX)
+     :dy (Mouse/getEventDY)}))
 
-(gl-do main)
-(gl-do render)
+(defn process-keyboard-event [^State state event]
+  (let [key (:key event)]
+    (cond 
+     (= key Keyboard/KEY_A) 
+       (assoc state :move-left  (:down? event))
+     (= key Keyboard/KEY_D) 
+       (assoc state :move-right (:down? event))
+     (= key Keyboard/KEY_W) 
+       (assoc state :move-fwd   (:down? event))
+     (= key Keyboard/KEY_S) 
+       (assoc state :move-back  (:down? event))
+     :else state)))
 
-(future (while true (gl-do render)))
+(defn process-mouse-event [^State state event]
+  (if (:left-down? event)
+    (when (not (Mouse/isGrabbed)) (Mouse/setGrabbed true))
+    (when (Mouse/isGrabbed) (Mouse/setGrabbed false)))
+  (if (:left-down? event)
+    (assoc state 
+      :mx (+ (:mx state) (:dx event))
+      :my (+ (:my state) (:dy event)))
+    state))
 
-(defn tick [dt]
-  (dosync 
-   (ref-set state 
-            (let [{:keys [pos fwd up vel]} @state]
-              (assoc @state 
-                :pos (vplus pos (stimes dt vel))
-                :fwd [0.0 0.0 -1.0] 
-                :up  [0.0 1.0 0.0])))))
+(defn not-nil? [x] (not (nil? x)))
 
-(dosync (ref-set state (assoc @state :vel [0.5 0.5 0.0])))
+(defn update-state-with-keyboard-input [^State state]
+  (let [events (take-while not-nil? (repeatedly get-keyboard-event))
+        next-state (reduce process-keyboard-event state events)]
+    next-state))
 
-(future (while true (Thread/sleep 1000) (tick 1)))
+(defn update-state-with-mouse-input [^State state]
+  (let [events (take-while not-nil? (repeatedly get-mouse-event))
+        next-state (reduce process-mouse-event state events)]
+    next-state))
 
-(reset-state)
-(stimes 1 [1.0 1.0 1.0])
-(tick 1)
-(stimes 1 (:vel @state))
-(println "Hello")
+(defn update-vel-component [^State state [pred dirn]]
+  (if (pred state) 
+    (assoc state :vel (vplus (:vel state) dirn))
+    state))
+
+(defn update-velocity [^State state]
+  (reduce update-vel-component 
+          (assoc state :vel ZERO)
+          [[:move-left  (:left state)]
+           [:move-right (vminus (:left state))]
+           [:move-fwd (:fwd state)]
+           [:move-back (vminus (:fwd state))]]))
+
+(defn update-position [^State state ^Double dt]
+  (let [{:keys [pos fwd up vel speed]} state
+        pos (vplus pos (svtimes (* dt speed) vel))]
+    (assoc state :pos pos)))
+
+(defn from-angles [^Double x ^Double y ^Double z]
+  (let [q (Quaternion.)]
+    (.fromAngles q x y z)))
+
+(defn screen-scale [^Double x]
+  (/ x 500.0))
+
+(defn update-direction [^State state]
+  (let [sx (- (screen-scale (:mx state)))
+        sy (screen-scale (:my state))
+        dirn (from-angles sy sx 0)
+        fwd  (qvtimes dirn (vminus U2))
+        up   (qvtimes dirn U1)
+        left (vcross up fwd)]
+;    (println "sx" sx "sy" sy "fwd" fwd "up" up "left" left )
+    (assoc state :dirn dirn :fwd fwd :up up :left left)))
+
+(defn update-state [^Double dt ^State state]
+  (-> state 
+      update-state-with-keyboard-input
+      update-state-with-mouse-input
+      update-direction
+      update-velocity
+      (update-position dt)))
+
+(defn tick []
+  (let [dt 0.01]
+;    (println "tick")
+    (Thread/sleep (* 1000 dt))
+    (dosync 
+     (ref-set game-state (update-state dt @game-state)))))
+
+(defn gl-init []
+  (gl-do 
+   (display-init)
+   (view-init)
+   (view-persp)
+   (view-clear)))
+
+(defn -main []
+  (reset-state)
+  (gl-init)
+  (future (while true (gl-do (render))))
+  (future (catch-and-print-ex (while true (tick))))
+)
+
+(comment 
+   (-main)
+   (tick)
+   (Mouse/isCreated) 
+   (reset-state)
+)
+

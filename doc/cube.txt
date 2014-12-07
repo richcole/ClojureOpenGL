@@ -1,0 +1,27 @@
+p - center of the cube
+r - radius of the cube
+
+ux, uy, uz - unit vectors
+
+faces: p, vs : permutation of(ux, uy, uz), sign
+  - position fp is p + sign * r * first(vs), 
+  - corners fp -+ r * first(permutation(second(vs), third(vs)))
+
+density: p -> { 0, 1 }
+draw face (p, q) if
+  density(p) != density(q)
+
+test(p, p +- one_of(ux, uy, uz))
+
+we want faces to point outwards
+this depends on the winding of the triangles
+
+ensure winding of the faces points out
+ - counter clockwise from outside the cube
+   for +z
+     (-x, y -> -x, -y -> x, -y)
+     (x, -y -> x, y -> -x, y)
+ - u, v coords come from x and y
+ - how does this change for -z
+
+

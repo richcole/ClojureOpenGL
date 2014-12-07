@@ -11,10 +11,16 @@
     :classifier "natives-linux"
     :native-prefix ""]
    [org.lwjgl.lwjgl/lwjgl_util "2.9.0"]
-   [org.clojars.trptcolin/core.async "0.1.242.1"]
+   [com.jme3/jme3-core "3.0.10"]
+   [com.jme3/jme3-desktop "3.0.10"]
+   [com.jme3/jme3-lwjgl "3.0.10"]
    ]
+  :repositories [["jme3" "http://updates.jmonkeyengine.org/maven/"]]
   :main ^:skip-aot my-stuff.core
   :target-path "target/%s"
   :profiles {:uberjar {:aot :all}}
   :native-path "native"
   )
+
+;   [org.clojars.trptcolin/core.async "0.1.242.1"]
+;   [net.mikera/vectorz-clj "0.26.2"]
