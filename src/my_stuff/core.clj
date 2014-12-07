@@ -142,6 +142,8 @@
     (look-at pos (vplus pos fwd) up))
   (GL11/glEnable GL11/GL_TEXTURE_2D)
   (GL11/glBindTexture GL11/GL_TEXTURE_2D (:id @stone-texture))
+  (use-program @simple-frag-program)
+  
   (GL11/glBegin GL11/GL_TRIANGLES)
 
   (GL11/glTexCoord2f 0 1)

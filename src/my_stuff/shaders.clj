@@ -8,7 +8,7 @@
 (defrecord Program [^Integer id])
 (defrecord Shader [^Integer id])
 
-(defn program-use [^Program program]
+(defn use-program [^Program program]
   (GL20/glUseProgram (:id program)))
 
 (defn throw-when-gl-error [get-status report]
