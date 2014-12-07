@@ -1,13 +1,13 @@
-(ns defoma.core
+(ns deforma.core
   (:import [org.lwjgl.opengl Display DisplayMode GL11 GL12 GL13 GL20]
            [org.lwjgl.util.glu GLU]
            [org.lwjgl BufferUtils]
            [org.lwjgl.input Keyboard Mouse]
            [com.jme3.math Quaternion Vector3f])
-  (:use  defoma.gl-thread
-         defoma.shaders
-         defoma.images
-         defoma.textures
+  (:use  deforma.gl-thread
+         deforma.shaders
+         deforma.images
+         deforma.textures
          )
   (:gen-class))
 

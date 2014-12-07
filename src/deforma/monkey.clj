@@ -1,4 +1,4 @@
-(ns defoma.monkey
+(ns deforma.monkey
   (:import [com.jme3 app.SimpleApplication
                      system.AppSettings
                      system.JmeSystem

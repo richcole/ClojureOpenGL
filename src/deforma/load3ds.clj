@@ -1,8 +1,8 @@
-(ns defoma.core
+(ns deforma.core
   (:import [java.nio MappedByteBuffer ByteBuffer ByteOrder]
            [java.nio.channels FileChannel FileChannel$MapMode]
            [java.io RandomAccessFile])
-  (:use defoma.mmap)
+  (:use deforma.mmap)
   (:gen-class))
 
 (defn read-u8 [^ByteBuffer f]

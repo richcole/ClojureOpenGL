@@ -1,10 +1,10 @@
-(ns defoma.textures
+(ns deforma.textures
   (:import [org.lwjgl.opengl GL11 GL20]
            javax.imageio.ImageIO
            org.lwjgl.BufferUtils 
            java.nio.IntBuffer
            java.awt.image.BufferedImage)
-  (:use  defoma.images)
+  (:use  deforma.images)
   (:gen-class))
 
 (defrecord Texture [^Integer id ^Integer width ^Integer height])

@@ -1,4 +1,4 @@
-(ns defoma.mmap
+(ns deforma.mmap
   (:import [java.nio MappedByteBuffer ByteBuffer ByteOrder]
            [java.nio.channels FileChannel FileChannel$MapMode]
            java.io.RandomAccessFile
