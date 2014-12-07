@@ -1,13 +1,13 @@
-(ns my-stuff.core
+(ns defoma.core
   (:import [org.lwjgl.opengl Display DisplayMode GL11 GL12 GL13 GL20]
            [org.lwjgl.util.glu GLU]
            [org.lwjgl BufferUtils]
            [org.lwjgl.input Keyboard Mouse]
            [com.jme3.math Quaternion Vector3f])
-  (:use  my-stuff.gl-thread
-         my-stuff.shaders
-         my-stuff.images
-         my-stuff.textures
+  (:use  defoma.gl-thread
+         defoma.shaders
+         defoma.images
+         defoma.textures
          )
   (:gen-class))
 
@@ -57,6 +57,8 @@
           0.0))
 
 (defonce game-state (ref initial-state))
+(defonce simple-frag-program (ref nil))
+(defonce stone-texture (ref nil))
 
 (defn reset-state []
   (dosync (ref-set game-state initial-state)))
@@ -255,9 +257,6 @@
     (dosync 
      (ref-set game-state (update-state dt @game-state)))))
 
-(defonce simple-frag-program (ref nil))
-(defonce stone-texture (ref nil))
-
 (defn gl-load-textures []
   (gl-do
    (dosync (ref-set stone-texture (load-texture "stone_texture.jpg")))))
@@ -293,6 +292,6 @@
    (reset-state)
 )
 
-@stone-texture
+
  
 

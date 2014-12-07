@@ -1,6 +1,6 @@
-(ns my-stuff.shaders
+(ns defoma.shaders
   (:import [org.lwjgl.opengl GL11 GL20])
-  (:use  my-stuff.gl-thread)
+  (:use  defoma.gl-thread)
   (:gen-class))
 
 ; FIXME: these leak shader ids on error

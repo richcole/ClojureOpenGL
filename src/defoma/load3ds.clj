@@ -1,8 +1,8 @@
-(ns my-stuff.core
+(ns defoma.core
   (:import [java.nio MappedByteBuffer ByteBuffer ByteOrder]
            [java.nio.channels FileChannel FileChannel$MapMode]
            [java.io RandomAccessFile])
-  (:use  my-stuff.gl-thread)
+  (:use  defoma.gl-thread)
   (:gen-class))
 
 (def file (RandomAccessFile. "/home/richcole/models/trees9/trees9.3ds" "r"))

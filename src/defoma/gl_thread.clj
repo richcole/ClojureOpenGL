@@ -1,4 +1,4 @@
-(ns my-stuff.gl-thread)
+(ns defoma.gl-thread)
 
 (defonce queue (new java.util.concurrent.SynchronousQueue))
 

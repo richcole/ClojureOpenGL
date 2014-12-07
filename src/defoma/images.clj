@@ -1,9 +1,9 @@
-(ns my-stuff.images
+(ns defoma.images
   (:import java.nio.ByteBuffer
            java.nio.ByteOrder
            javax.imageio.ImageIO
            java.awt.image.BufferedImage)
-  (:use  my-stuff.gl-thread)
+  (:use  defoma.gl-thread)
   (:gen-class))
 
 (defn load-image [path]
