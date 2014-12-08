@@ -1,4 +1,4 @@
-(defproject my-stuff "0.1.0-SNAPSHOT"
+(defproject deforma "0.1.0-SNAPSHOT"
   :description "Experiements in OpenGL with Clojure"
   :url "http://example.com/FIXME"
   :license {:name "Apache 2.0"
@@ -16,7 +16,7 @@
    [com.jme3/jme3-lwjgl "3.0.10"]
    ]
   :repositories [["jme3" "http://updates.jmonkeyengine.org/maven/"]]
-  :main ^:skip-aot my-stuff.core
+  :main deforma.core
   :target-path "target/%s"
   :profiles {:uberjar {:aot :all}}
   :native-path "native"

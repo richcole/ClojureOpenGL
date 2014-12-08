@@ -1,6 +1,5 @@
 (ns deforma.shaders
   (:import [org.lwjgl.opengl GL11 GL20])
-  (:use  deforma.gl-thread)
   (:gen-class))
 
 ; FIXME: these leak shader ids on error

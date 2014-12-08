@@ -4,10 +4,11 @@
            [org.lwjgl BufferUtils]
            [org.lwjgl.input Keyboard Mouse]
            [com.jme3.math Quaternion Vector3f])
-  (:use  deforma.gl-thread
+  (:use  deforma.gl_thread
          deforma.shaders
          deforma.images
          deforma.textures
+         deforma.mesh
          )
   (:gen-class))
 
@@ -59,6 +60,7 @@
 (defonce game-state (ref initial-state))
 (defonce simple-frag-program (ref nil))
 (defonce stone-texture (ref nil))
+(defonce tm (ref nil))
 
 (defn reset-state []
   (dosync (ref-set game-state initial-state)))
@@ -140,23 +142,31 @@
 
 (defn render []
   (view-clear)
+
   (let [{:keys [pos fwd up]} @game-state]
     (look-at pos (vplus pos fwd) up))
-  (GL11/glEnable GL11/GL_TEXTURE_2D)
-  (GL11/glBindTexture GL11/GL_TEXTURE_2D (:id @stone-texture))
+
   (use-program @simple-frag-program)
-  
-  (GL11/glBegin GL11/GL_TRIANGLES)
+  (when @tm (render-mesh @tm))
 
-  (GL11/glTexCoord2f 0 1)
-  (GL11/glVertex3f -1.0  1.0 -10.0)
+  (when false
+    (GL11/glEnable GL11/GL_TEXTURE_2D)
+    (GL11/glBindTexture GL11/GL_TEXTURE_2D (:id @stone-texture))
+    (use-program @simple-frag-program)
+    
+    (GL11/glBegin GL11/GL_TRIANGLES)
+    
+    (GL11/glTexCoord2f 0 1)
+    (GL11/glVertex3f -1.0  1.0 -10.0)
+    
+    (GL11/glTexCoord2f 1 1)
+    (GL11/glVertex3f  1.0  1.0 -10.0)
+    
+    (GL11/glTexCoord2f 1 0)
+    (GL11/glVertex3f  1.0 -1.0 -10.0)
+    (GL11/glEnd)
+    )
 
-  (GL11/glTexCoord2f 1 1)
-  (GL11/glVertex3f  1.0  1.0 -10.0)
-
-  (GL11/glTexCoord2f 1 0)
-  (GL11/glVertex3f  1.0 -1.0 -10.0)
-  (GL11/glEnd)
   (Display/update)
 )
 
@@ -281,21 +291,23 @@
   (gl-init)
   (gl-compile-shaders)
   (gl-load-textures)
+  (gl-do (dosync (ref-set tm (new-triangle-mesh @stone-texture))))
+
   (future (while true (gl-do (render))))
   (future (catch-and-print-ex (while true (tick))))
 )
 
-(comment 
+(comment  
+
    (-main)
    (tick)
    (Mouse/isCreated) 
    (reset-state)
-)
 
-(clojure.java.io/copy 
- (clojure.java.io/input-stream 
-  (clojure.java.io/resource "trees9.3ds"))
-  (clojure.java.io/file "/tmp/trees9.3ds"))
+
+  (def tm (ref nil))
+  (gl-do (render-mesh @tm))
+)
 
 
  

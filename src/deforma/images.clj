@@ -3,7 +3,6 @@
            java.nio.ByteOrder
            javax.imageio.ImageIO
            java.awt.image.BufferedImage)
-  (:use  deforma.gl-thread)
   (:gen-class))
 
 (defn load-image [path]

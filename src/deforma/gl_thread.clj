@@ -1,4 +1,6 @@
-(ns deforma.gl-thread)
+(ns deforma.gl_thread
+  (:use clojure.stacktrace)
+  (:gen-class))
 
 (defonce queue (new java.util.concurrent.SynchronousQueue))
 
@@ -6,7 +8,7 @@
   (try (item)
     (catch Throwable e 
       (println "Exception throw: " (.getMessage e))
-      (clojure.stacktrace/print-stack-trace e)
+      (print-stack-trace e)
       (println ""))))
 
 (defn process-queue [queue]
