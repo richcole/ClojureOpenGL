@@ -54,6 +54,9 @@
         (Mesh. vbo tbo ibo tex vao)))
 
 (defn render-mesh [mesh]
+  (GL13/glActiveTexture GL13/GL_TEXTURE0)
+  (GL11/glBindTexture GL11/GL_TEXTURE_2D (:id (:tex mesh)))
+
   (GL30/glBindVertexArray (:vao mesh))
   (GL20/glEnableVertexAttribArray 0)
   (GL20/glEnableVertexAttribArray 1)

@@ -58,7 +58,7 @@
           0.0))
 
 (defonce game-state (ref initial-state))
-(defonce simple-frag-program (ref nil))
+(defonce simple-program (ref nil))
 (defonce stone-texture (ref nil))
 (defonce tm (ref nil))
 
@@ -146,13 +146,13 @@
   (let [{:keys [pos fwd up]} @game-state]
     (look-at pos (vplus pos fwd) up))
 
-  (use-program @simple-frag-program)
+  (when @simple-program (use-program @simple-program))
   (when @tm (render-mesh @tm))
 
   (when false
     (GL11/glEnable GL11/GL_TEXTURE_2D)
     (GL11/glBindTexture GL11/GL_TEXTURE_2D (:id @stone-texture))
-    (use-program @simple-frag-program)
+    (use-program @simple-program)
     
     (GL11/glBegin GL11/GL_TRIANGLES)
     
@@ -274,9 +274,10 @@
 (defn gl-compile-shaders []
   (gl-do 
    (dosync 
-    (ref-set simple-frag-program
+    (ref-set simple-program
              (new-program-from-shader-resources 
-              [["simple-frag.glsl" GL20/GL_FRAGMENT_SHADER]])))))
+              [["simple-vert.glsl" GL20/GL_VERTEX_SHADER]
+               ["simple-frag.glsl" GL20/GL_FRAGMENT_SHADER]])))))
 
 (defn gl-init []
   (gl-do 
