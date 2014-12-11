@@ -60,6 +60,13 @@
     {:num-elements num-elements 
      :elements (short-buf (read-buf f (* num-elements 4 2)))}))
 
+(defn read-face-materials [f]
+  (let [name (read-strz f)
+        num-elements (read-u16 f)]
+    {:name name
+     :num-elements num-elements 
+     :elements (short-buf (read-buf f (* num-elements 1 2)))}))
+
 (defn read-tex-coords [f]
   (let [num-vertices (read-u16 f)]
     (println "tx pos" (.position f))
@@ -98,6 +105,9 @@
 (defn read-name [f]
   {:name (read-strz f)})
 
+(defn read-filename [f]
+  {:filename (read-strz f)})
+
 (defn read-frames [f]
   { :start (read-u32 f) :end (read-u32 f)})
 
@@ -112,21 +122,32 @@
 (def node-types
   (to-node-map 
    [
-    (NodeType. 0x4d4d "Main"            read-nothing           true)
-    (NodeType. 0x0002 "3DS-Version"     read-version           false)
-    (NodeType. 0x3d3d "Editor"          read-nothing           true)
-    (NodeType. 0x4000 "ObjectBlock"     read-name              true)
-    (NodeType. 0x4100 "TriangularMesh"  read-nothing           true)
-    (NodeType. 0x4110 "VertexList"      read-vertices          false)
-    (NodeType. 0x4120 "Element"         read-elements          true)
-    (NodeType. 0x4140 "TexCoords"       read-tex-coords        true)
-    (NodeType. 0xAFFF "Material Block"  read-nothing           true)
-    (NodeType. 0xB000 "KeyFramer"       read-nothing           true)
-    (NodeType. 0xB008 "Frames"          read-frames            true)
-    (NodeType. 0x0010 "Rgb (float)"     read-nothing           false)
-    (NodeType. 0x0011 "Rgb (byte) "     read-nothing           false)
-    (NodeType. 0x0012 "Rgb (byte) g"    read-nothing           false)
-    (NodeType. 0x0013 "Rgb (float) g"   read-nothing           false)
+    (NodeType. 0x4d4d "Main"              read-nothing           true)
+    (NodeType. 0x0002 "3DS-Version"       read-version           false)
+    (NodeType. 0x3d3d "Editor"            read-nothing           true)
+    (NodeType. 0x4000 "ObjectBlock"       read-name              true)
+    (NodeType. 0x4100 "TriangularMesh"    read-nothing           true)
+    (NodeType. 0x4110 "VertexList"        read-vertices          false)
+    (NodeType. 0x4120 "Element"           read-elements          true)
+    (NodeType. 0x4130 "FaceMaterials"     read-face-materials    true)
+    (NodeType. 0x4140 "TexCoords"         read-tex-coords        true)
+    (NodeType. 0xAFFF "MaterialBlock"     read-nothing           true)
+    (NodeType. 0xA000 "MaterialName"      read-name              false)
+    (NodeType. 0xA010 "AmbientColor"      read-nothing           true)
+    (NodeType. 0xA020 "DiffuseColor"      read-nothing           true)
+    (NodeType. 0xA030 "SpecularColor"     read-nothing           true)
+    (NodeType. 0xA040 "ShininessPercent"  read-nothing           true)
+    (NodeType. 0xA040 "ShininessStrength" read-nothing           true)
+    (NodeType. 0xA200 "TextureMap1"       read-nothing           true)
+    (NodeType. 0xA204 "SpecularMap"       read-nothing           true)
+    (NodeType. 0xA33A "TextureMap2"       read-nothing           true)
+    (NodeType. 0xA300 "MappingFilename"   read-filename          true)
+    (NodeType. 0xB000 "KeyFramer"         read-nothing           true)
+    (NodeType. 0xB008 "Frames"            read-frames            true)
+    (NodeType. 0x0010 "Rgb (float)"       read-nothing           false)
+    (NodeType. 0x0011 "Rgb (byte) "       read-nothing           false)
+    (NodeType. 0x0012 "Rgb (byte) g"      read-nothing           false)
+    (NodeType. 0x0013 "Rgb (float) g"     read-nothing           false)
     ]))
 
 (defn read-fields [f type]
@@ -159,15 +180,19 @@
 (declare print-3ds)
 
 (defn print-3ds [indent node]
-  (println (format (str indent "%04x") (:id node)) (or (:name node) ""))
+  (println (format (str indent "%04x") (:id node)))
+  (when (:name node) 
+    (println (str indent " name") (:name node)))
+  (when (:filename node) 
+    (println (str indent " filename") (:filename node)))
   (when (:num-vertices node) 
-    (println "num-vertices" (:num-vertices node)))
+    (println (str indent " num-vertices") (:num-vertices node)))
   (when (:num-elements node) 
-    (println "num-elements" (:num-elements node)))
+    (println (str indent " num-elements") (:num-elements node)))
   (when (:vertices node) 
-    (println "vertices" (.limit (:vertices node))))
+    (println (str indent " vertices") (.limit (:vertices node))))
   (when (:elements node) 
-    (println "elements" (.limit (:elements node))))
+    (println (str indent " elements") (.limit (:elements node))))
   (doseq [child (:children node)]
     (print-3ds (str "  " indent) child))
   nil)
