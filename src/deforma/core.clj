@@ -9,6 +9,8 @@
          deforma.images
          deforma.textures
          deforma.mesh
+         deforma.load3ds
+         deforma.mmap
          )
   (:gen-class))
 
@@ -61,6 +63,7 @@
 (defonce simple-program (ref nil))
 (defonce stone-texture (ref nil))
 (defonce tm (ref nil))
+(def tree-mesh (ref nil))
 
 (defn reset-state []
   (dosync (ref-set game-state initial-state)))
@@ -101,8 +104,11 @@
   (GL11/glBlendFunc GL11/GL_SRC_ALPHA GL11/GL_ONE_MINUS_SRC_ALPHA)
   (GL11/glEnable GL11/GL_DEPTH_TEST)
   (GL11/glDepthFunc GL11/GL_LESS)
-  (GL11/glEnable GL11/GL_CULL_FACE)
+  (GL11/glDisable GL11/GL_CULL_FACE)
   (GL11/glFrontFace GL11/GL_CCW)
+;  (GL11/glEnable GL11/GL_CULL_FACE)
+;  (GL11/glFrontFace GL11/GL_CCW)
+  (GL11/glDisable GL11/GL_CULL_FACE)
   (GL11/glEnable GL11/GL_LIGHTING)
   (GL11/glClearColor 0.0 0.0 0.0 0.0)
   (GL11/glClearDepth 1)
@@ -148,6 +154,7 @@
 
   (when @simple-program (use-program @simple-program))
   (when @tm (render-mesh @tm))
+  (when @tree-mesh (render-mesh @tree-mesh))
 
   (when false
     (GL11/glEnable GL11/GL_TEXTURE_2D)
@@ -204,8 +211,6 @@
       :mx (+ (:mx state) (:dx event))
       :my (+ (:my state) (:dy event)))
     state))
-
-(defn not-nil? [x] (not (nil? x)))
 
 (defn update-state-with-keyboard-input [^State state]
   (let [events (take-while not-nil? (repeatedly get-keyboard-event))
@@ -287,6 +292,8 @@
    (view-clear)
 ))
 
+(gl-do (view-init))
+
 (defn -main []
   (reset-state)
   (gl-init)
@@ -298,6 +305,10 @@
   (future (catch-and-print-ex (while true (tick))))
 )
 
+(defn to-list [buf]
+  (.rewind buf)
+  (doall (map (fn [x] (.get buf)) (range 0 (.limit buf)))))
+
 (comment  
 
    (-main)
@@ -305,9 +316,40 @@
    (Mouse/isCreated) 
    (reset-state)
 
+  (def tree-file (mmap-resource "u1.3ds")) ; trees9.3ds
+  (def tree (read-3ds tree-file))
+  (print-3ds "" tree)
+
+  (print-3ds "" (first-node (match-name-fn "Axe") tree))
+
+  (def tree-node-mesh (node-mesh (first-node (match-name-fn "Axe") tree)))
+
+  (gl-do (dosync (ref-set tree-mesh (new-mesh tree-node-mesh @stone-texture))))
+  (check-node-mesh tree-node-mesh)
+
+  (to-list (:vertices (first-node (match-id-fn 0x4110) tree)))
+  (count (to-list (:elements (first-node (match-id-fn 0x4120) tree))))
+
+(count (to-list (:elements (node-mesh (first-node (match-name-fn "Cube") tree)))))
+
 
   (def tm (ref nil))
   (gl-do (render-mesh @tm))
+
+  (gl-do
+   (GL11/glEnable GL11/GL_CULL_FACE)
+   (GL11/glFrontFace GL11/GL_CCW)
+   )
+
+  (gl-do
+   (GL11/glEnable GL11/GL_CULL_FACE)
+   (GL11/glFrontFace GL11/GL_CW)
+   )
+
+  (gl-do
+   (GL11/glDisable GL11/GL_CULL_FACE)
+   (GL11/glFrontFace GL11/GL_CW)
+   )
 )
 
 

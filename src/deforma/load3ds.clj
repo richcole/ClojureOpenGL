@@ -1,6 +1,7 @@
-(ns deforma.core
+(ns deforma.load3ds
   (:import [java.nio MappedByteBuffer ByteBuffer ByteOrder]
            [java.nio.channels FileChannel FileChannel$MapMode]
+           [org.lwjgl BufferUtils]
            [java.io RandomAccessFile])
   (:use deforma.mmap)
   (:gen-class))
@@ -14,9 +15,6 @@
 (defn read-u32 [^ByteBuffer f]
   (bit-and (long (.getInt f)) 0xffffffff))
 
-(defn read-float [^ByteBuffer f]
-  (.getFloat f))
-
 (defn read-byte [^ByteBuffer f]
   (.get f))
 
@@ -26,7 +24,6 @@
 (defn read-strz [^ByteBuffer f]
   (let [s (apply str (map char 
                           (take-while not-zero (repeatedly (fn [] (.get f))))))]
-    (println "s" s)
     s))
 
 (declare read-nodes)
@@ -37,25 +34,63 @@
 (defn read-nodes [f end]
   (doall (take-while not-nil? (repeatedly (fn [] (read-node f end))))))
 
+(defn short-buf [buf]
+  (let [nbuf (.duplicate buf)
+        _    (.order nbuf ByteOrder/LITTLE_ENDIAN)
+        rbuf (.asShortBuffer nbuf)]
+    (.limit rbuf (/ (.limit buf) 2))
+    rbuf))
 
-(range 0 10)
+(defn float-buf [buf]
+  (let [nbuf (.duplicate buf)
+        _    (.order nbuf ByteOrder/LITTLE_ENDIAN)
+        rbuf (.asFloatBuffer nbuf)]
+    (.limit rbuf (/ (.limit buf) 4))
+    rbuf))
 
 (defn read-buf [f buf-len]
+  (println "buf-len" buf-len)
   (let [buf (.slice f)]
     (.limit buf buf-len)
     (.position f (+ (.position f) buf-len))
     buf))
 
-(defn read-faces-description [f]
-  (let [num-faces (read-u16 f)]
-    (println "num-faces" num-faces)
-    {:num-faces num-faces :indexes (read-buf f (* num-faces 4 2)) }
-    ))
+(defn read-elements [f]
+  (let [num-elements (read-u16 f)]
+    {:num-elements num-elements 
+     :elements (short-buf (read-buf f (* num-elements 4 2)))}))
 
-(defn read-triangular-mesh [f]
+(defn read-tex-coords [f]
   (let [num-vertices (read-u16 f)]
-    (println "num-vertices" num-vertices)
-    {:num-vertices num-vertices :verticies (read-buf f (* num-vertices 3 4))}))
+    (println "tx pos" (.position f))
+    {:num-vertices num-vertices
+     :tex-coords (float-buf (read-buf f (* num-vertices 2 4)))}))
+
+(defn read-vertices [f]
+  (let [num-vertices (read-u16 f)]
+    (println "vs pos" (.position f))
+    {:num-vertices num-vertices 
+     :vertices (float-buf (read-buf f (* num-vertices 3 4)))}))
+
+(defn node-vertex-list [vertex-node]
+  (:vertices vertex-node))
+
+(defn node-element-list [element-node]
+  (let [elements (:elements element-node)
+        num-elements (:num-elements element-node)
+        _ (println "num-elements" num-elements)
+        buf (BufferUtils/createShortBuffer (* 3 num-elements))]
+    (.rewind elements)
+    (doseq [i (range 0 (.limit elements))]
+      (if (= (mod i 4) 3)
+        (.get elements)
+        (.put buf (.get elements))))
+    (.flip buf)
+    (.rewind elements)
+    buf))
+
+(defn node-tex-coords [tex-coords-nodes]
+  (:tex-coords tex-coords-nodes))
 
 (defn read-version [f] 
   {:version (read-u32 f)})
@@ -82,8 +117,9 @@
     (NodeType. 0x3d3d "Editor"          read-nothing           true)
     (NodeType. 0x4000 "ObjectBlock"     read-name              true)
     (NodeType. 0x4100 "TriangularMesh"  read-nothing           true)
-    (NodeType. 0x4110 "VertexList"      read-triangular-mesh   true)
-    (NodeType. 0x4120 "FaceDescription" read-faces-description true)
+    (NodeType. 0x4110 "VertexList"      read-vertices          false)
+    (NodeType. 0x4120 "Element"         read-elements          true)
+    (NodeType. 0x4140 "TexCoords"       read-tex-coords        true)
     (NodeType. 0xAFFF "Material Block"  read-nothing           true)
     (NodeType. 0xB000 "KeyFramer"       read-nothing           true)
     (NodeType. 0xB008 "Frames"          read-frames            true)
@@ -100,17 +136,18 @@
 
 (defn read-node [f end]
   (let [pos     (.position f)]
+    (println "pos" pos "end" end)
     (when (< pos end)
       (let [id       (read-u16 f)
             offset   (read-u32 f)
             type     (get node-types id)
             fields   (read-fields f type)]
-        (println "pos" pos "id" (format "%04x" id) "offset" offset fields)
+        (println (format "%04x" id) pos offset (+ pos offset))
         (let [children (if (:has-children type)
                          (read-nodes f (+ pos offset))
                          [])]
           (.position f (+ pos offset))
-          (assoc fields :id id :pos pos :offset offset :children children))))))
+          (assoc fields :id id :type type :pos pos :offset offset :children children))))))
         
 (defn read-3ds [mmap-file]
   (let [f (:buf mmap-file)
@@ -123,15 +160,52 @@
 
 (defn print-3ds [indent node]
   (println (format (str indent "%04x") (:id node)) (or (:name node) ""))
+  (when (:num-vertices node) 
+    (println "num-vertices" (:num-vertices node)))
+  (when (:num-elements node) 
+    (println "num-elements" (:num-elements node)))
+  (when (:vertices node) 
+    (println "vertices" (.limit (:vertices node))))
+  (when (:elements node) 
+    (println "elements" (.limit (:elements node))))
   (doseq [child (:children node)]
     (print-3ds (str "  " indent) child))
   nil)
 
+(defn first-node [match node]
+  (if (match node)
+    node
+    (first (filter not-nil? (map #(first-node match %) (:children node))))))
+
+(defn match-name-fn [name]
+  #(= name (:name %)))
+
+(defn match-id-fn [name]
+  #(= name (:id %)))
+
+(defn node-mesh [mesh-node]
+  {:vertices (node-vertex-list (first-node (match-id-fn 0x4110) mesh-node))
+   :elements (node-element-list (first-node (match-id-fn 0x4120) mesh-node))
+   :tex-coords (node-tex-coords (first-node (match-id-fn 0x4140) mesh-node))})
+
+(defn check-node-mesh [mesh-node]
+  (let [e (:elements mesh-node)
+        v (:vertices mesh-node)
+        t (:tex-coords mesh-node)
+        l (.limit v)]
+    (.rewind e)
+    (.rewind v)
+    (.rewind t)
+    (println (.limit v) (.limit t))
+    (assert (= (* 2 (.limit v)) (* 3 (.limit t))))
+    (doseq [i (range 0 (.limit e))]
+      (let [index (.get e)]
+      (assert (< index l))))))
+
+
 (comment
 
-  (def tree (mmap-resource "trees9.3ds"))
-  (print-3ds "" (read-3ds tree))
-
+  
 )
 
 

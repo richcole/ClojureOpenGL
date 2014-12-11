@@ -30,6 +30,25 @@
     (.put buf (short v)))
   (.flip buf)
   buf)
+
+(defn new-mesh [node-mesh tex]
+  (let [e (:elements node-mesh)
+        v (:vertices node-mesh)
+        t (:tex-coords node-mesh)
+
+        vao  (GL30/glGenVertexArrays)
+        _    (GL30/glBindVertexArray vao)
+
+        vbo  (load-buffer v GL15/GL_ARRAY_BUFFER)
+        _    (GL20/glVertexAttribPointer 0 3 GL11/GL_FLOAT false 0 0)
+
+        tbo   nil
+;        tbo  (load-buffer t  GL15/GL_ARRAY_BUFFER)
+;        _    (GL20/glVertexAttribPointer 1 2 GL11/GL_FLOAT false 0 0)
+
+        ibo  (load-buffer e GL15/GL_ELEMENT_ARRAY_BUFFER)
+        ]
+        (Mesh. vbo tbo ibo tex vao)))
   
 (defn new-triangle-mesh [tex]
   (let [vao  (GL30/glGenVertexArrays)
@@ -37,13 +56,11 @@
 
         vbuf (BufferUtils/createFloatBuffer (* 3 3))
         vbuf (write-fbuf vbuf [-1.0 1.0 -10.0 1.0 1.0 -10.0 1.0 -1.0 -10.0])
-        _    (println "vbuf" vbuf)
         vbo  (load-buffer vbuf GL15/GL_ARRAY_BUFFER)
         _    (GL20/glVertexAttribPointer 0 3 GL11/GL_FLOAT false 0 0)
 
         tbuf (BufferUtils/createFloatBuffer (* 3 2))
         tbuf (write-fbuf tbuf [0 1 1 1 1 0])
-        _    (println "tbuf" tbuf)
         tbo  (load-buffer tbuf  GL15/GL_ARRAY_BUFFER)
         _    (GL20/glVertexAttribPointer 1 2 GL11/GL_FLOAT false 0 0)
 
@@ -59,7 +76,7 @@
 
   (GL30/glBindVertexArray (:vao mesh))
   (GL20/glEnableVertexAttribArray 0)
-  (GL20/glEnableVertexAttribArray 1)
+;  (GL20/glEnableVertexAttribArray 1)
  
   (GL15/glBindBuffer GL15/GL_ELEMENT_ARRAY_BUFFER (:id (:ido mesh)))
   (GL11/glDrawElements GL11/GL_TRIANGLES (:size (:ido mesh)) GL11/GL_UNSIGNED_SHORT 0)
@@ -70,25 +87,6 @@
   (GL30/glBindVertexArray 0)
   )
 
-(defn old-render [mesh]
-  (GL11/glEnable GL11/GL_TEXTURE_2D)
-
-  (GL11/glEnableClientState GL11/GL_VERTEX_ARRAY)
-  (GL15/glBindBuffer GL15/GL_ARRAY_BUFFER (:id (:vbo mesh)))
-  (GL11/glVertexPointer 3 GL11/GL_FLOAT 0 0)
-
-  (GL13/glClientActiveTexture GL13/GL_TEXTURE0)
-  (GL11/glBindTexture GL11/GL_TEXTURE_2D (:id (:tex mesh)))
-
-  (GL11/glEnableClientState GL11/GL_TEXTURE_COORD_ARRAY)
-  (GL15/glBindBuffer GL15/GL_ARRAY_BUFFER (:id (:tbo mesh)))
-  (GL11/glTexCoordPointer 2 GL11/GL_FLOAT 0 0)
-
-  (GL11/glEnableClientState GL11/GL_INDEX_ARRAY)
-  (GL15/glBindBuffer GL15/GL_ELEMENT_ARRAY_BUFFER (:id (:ido mesh)))
-  (GL11/glDrawElements GL11/GL_TRIANGLES (:size (:ido mesh)) GL11/GL_UNSIGNED_SHORT 0)
-;  (println "error:" (GL11/glGetError))
-  )
         
         
     
