@@ -49,6 +49,19 @@
                        buf)
 
     texture))
+
+(def texture-assets (ref {}))
+
+(defn get-texture [path]
+  (let [texture (get @texture-assets path)]
+    (if (nil? texture)
+      (dosync (let [texture (load-texture path)]
+                (ref-set texture-assets (assoc @texture-assets path texture))
+                texture)))
+      texture))
+  
+
+
     
     
     

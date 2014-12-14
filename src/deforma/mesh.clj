@@ -31,10 +31,11 @@
   (.flip buf)
   buf)
 
-(defn new-mesh [node-mesh tex]
+(defn new-mesh [node-mesh]
   (let [e (:elements node-mesh)
         v (:vertices node-mesh)
         t (:tex-coords node-mesh)
+        tex (load-texture (:texture-filename node-mesh))
 
         vao  (GL30/glGenVertexArrays)
         _    (GL30/glBindVertexArray vao)
@@ -43,8 +44,8 @@
         _    (GL20/glVertexAttribPointer 0 3 GL11/GL_FLOAT false 0 0)
 
         tbo   nil
-;        tbo  (load-buffer t  GL15/GL_ARRAY_BUFFER)
-;        _    (GL20/glVertexAttribPointer 1 2 GL11/GL_FLOAT false 0 0)
+        tbo  (load-buffer t  GL15/GL_ARRAY_BUFFER)
+        _    (GL20/glVertexAttribPointer 1 2 GL11/GL_FLOAT false 0 0)
 
         ibo  (load-buffer e GL15/GL_ELEMENT_ARRAY_BUFFER)
         ]
@@ -76,7 +77,7 @@
 
   (GL30/glBindVertexArray (:vao mesh))
   (GL20/glEnableVertexAttribArray 0)
-;  (GL20/glEnableVertexAttribArray 1)
+  (GL20/glEnableVertexAttribArray 1)
  
   (GL15/glBindBuffer GL15/GL_ELEMENT_ARRAY_BUFFER (:id (:ido mesh)))
   (GL11/glDrawElements GL11/GL_TRIANGLES (:size (:ido mesh)) GL11/GL_UNSIGNED_SHORT 0)

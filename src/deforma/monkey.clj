@@ -13,7 +13,7 @@
                    "com/jme3/asset/Desktop.cfg"))
  
 (def assetManager (JmeSystem/newAssetManager desktop-cfg))
- 
+
 (def ^:dynamic *app-settings* (doto (AppSettings. true)
                                 (.setFullscreen false)
                                 (.setTitle "jme_clj")))
@@ -35,3 +35,8 @@
     (.setPauseOnLostFocus false)
     (.setSettings *app-settings*)
     (.start)))
+
+(comment
+  (map #(.getName %) (.getChildren model))
+  (def model (.loadModel assetManager "something.blend"))
+)

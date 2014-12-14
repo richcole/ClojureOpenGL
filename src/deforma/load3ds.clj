@@ -97,7 +97,18 @@
     buf))
 
 (defn node-tex-coords [tex-coords-nodes]
-  (:tex-coords tex-coords-nodes))
+  (let [num-vertices (:num-vertices tex-coords-nodes)
+        uvbuf (:tex-coords tex-coords-nodes)
+        rbuf (BufferUtils/createFloatBuffer (* 2 num-vertices))]
+    (.rewind uvbuf)
+    (doseq [i (range 0 num-vertices)]
+      (let [x (.get uvbuf)
+            y (.get uvbuf)]
+        (.put rbuf (float (+ x)))
+        (.put rbuf (float (- y)))))
+    (.flip rbuf)
+    (.rewind uvbuf)
+    rbuf))
 
 (defn read-version [f] 
   {:version (read-u32 f)})
@@ -202,16 +213,65 @@
     node
     (first (filter not-nil? (map #(first-node match %) (:children node))))))
 
+(defn each-node [match node]
+  (if (match node)
+    [node]
+    (apply concat (map #(each-node match %) (:children node)))))
+
+(defn first-path [match path]
+  (if (sequential? path)
+    (if (match (last path))
+      path
+      (first (filter not-nil? (map #(first-path match (conj path %)) 
+                                   (:children (last path))))))
+    (first-path match [path])))
+
+(defn each-path [match path]
+  (if (sequential? path)
+    (if (match (last path))
+      [path]
+      (apply concat (map #(each-path match (conj path %)) 
+                                   (:children (last path)))))
+    (each-path match [path])))
+
 (defn match-name-fn [name]
   #(= name (:name %)))
+
+(defn nth-last [i s]
+  (first (take-last i s)))
+
+(defn match-field-fn [ & rest ]
+  (fn [record] 
+    (reduce (fn [result [field value]] 
+              (and result (= value (get record field)))) true (partition 2 rest))))
 
 (defn match-id-fn [name]
   #(= name (:id %)))
 
-(defn node-mesh [mesh-node]
-  {:vertices (node-vertex-list (first-node (match-id-fn 0x4110) mesh-node))
-   :elements (node-element-list (first-node (match-id-fn 0x4120) mesh-node))
-   :tex-coords (node-tex-coords (first-node (match-id-fn 0x4140) mesh-node))})
+(defn node-texture-filename [ root-node material-name ]
+  (let [material-node    (nth-last 2 (first-path (match-field-fn :id 0xA000 :name material-name) root-node))
+        texture-node     (first-node (match-field-fn :id 0xA200) material-node)
+        texture-filename (:filename (first-node (match-field-fn :id 0xA300) texture-node))]
+    (println "material-name" material-name)
+    (println "material-node" material-node)
+    (println "texture-node" texture-node)
+    texture-filename))
+
+(defn node-mesh [root-node mesh-name]
+  (let [mesh-node (first-node (match-field-fn :id 0x4000 :name mesh-name) root-node)
+        vertex-node (first-node (match-id-fn 0x4110) mesh-node)
+        element-node (first-node (match-id-fn 0x4120) mesh-node)
+        tex-coords-node (first-node (match-id-fn 0x4140) mesh-node)
+        face-material-node (first-node (match-id-fn 0x4130) mesh-node)
+        material-name (:name face-material-node)
+        texture-filename (node-texture-filename root-node material-name)]
+    (println "face-material-node" face-material-node)
+    (println "texture-filename" texture-filename)
+    {:vertices (node-vertex-list vertex-node)
+     :elements (node-element-list element-node)
+     :tex-coords (node-tex-coords tex-coords-node)
+     :texture-filename texture-filename}))
+
 
 (defn check-node-mesh [mesh-node]
   (let [e (:elements mesh-node)

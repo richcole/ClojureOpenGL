@@ -23,7 +23,8 @@
      ^Vector3f vel 
      ^Double speed 
      ^Double mx 
-     ^Double my])
+     ^Double my
+     ^Boolean mouse-grabbed])
 
 (defn vector3f [x y z]
   (Vector3f. x y z))
@@ -57,7 +58,8 @@
           ZERO
           10.0
           0.0
-          0.0))
+          0.0
+          false))
 
 (defonce game-state (ref initial-state))
 (defonce simple-program (ref nil))
@@ -146,7 +148,19 @@
    (vx at ) (vy at ) (vz at ) 
    (vx up ) (vy up ) (vz up )))
 
+(defn update-mouse-grabbed [state]
+  (if (:mouse-grabbed state)
+    (when (not (Mouse/isGrabbed)) (Mouse/setGrabbed true))
+    (when (Mouse/isGrabbed) (Mouse/setGrabbed false)))
+  state)
+
 (defn render []
+  (dosync
+      (ref-set game-state 
+               (-> @game-state 
+                   update-state-with-keyboard-input
+                   update-state-with-mouse-input
+                   update-mouse-grabbed)))
   (view-clear)
 
   (let [{:keys [pos fwd up]} @game-state]
@@ -204,13 +218,11 @@
 
 (defn process-mouse-event [^State state event]
   (if (:left-down? event)
-    (when (not (Mouse/isGrabbed)) (Mouse/setGrabbed true))
-    (when (Mouse/isGrabbed) (Mouse/setGrabbed false)))
-  (if (:left-down? event)
     (assoc state 
+      :mouse-grabbed true
       :mx (+ (:mx state) (:dx event))
       :my (+ (:my state) (:dy event)))
-    state))
+    (assoc state :mouse-grabbed false)))
 
 (defn update-state-with-keyboard-input [^State state]
   (let [events (take-while not-nil? (repeatedly get-keyboard-event))
@@ -259,8 +271,6 @@
 
 (defn update-state [^Double dt ^State state]
   (-> state 
-      update-state-with-keyboard-input
-      update-state-with-mouse-input
       update-direction
       update-velocity
       (update-position dt)))
@@ -309,6 +319,7 @@
   (.rewind buf)
   (doall (map (fn [x] (.get buf)) (range 0 (.limit buf)))))
 
+
 (comment  
 
    (-main)
@@ -316,15 +327,39 @@
    (Mouse/isCreated) 
    (reset-state)
 
-  (def tree-file (mmap-resource "u1.3ds")) ; trees9.3ds
+  (def tree-file (mmap-resource "dragon.3ds")) ; trees9.3ds
   (def tree (read-3ds tree-file))
   (print-3ds "" tree)
 
-  (print-3ds "" (first-node (match-name-fn "Axe") tree))
+  (print-3ds "" (first-node (match-name-fn "Big_Dragon") tree))
 
-  (def tree-node-mesh (node-mesh (first-node (match-name-fn "Axe") tree)))
+  (nth-last 2 (first-path (match-field-fn :name "Axe") tree))
 
-  (gl-do (dosync (ref-set tree-mesh (new-mesh tree-node-mesh @stone-texture))))
+  (node-texture-filename tree "MaterialMyAx")
+
+  (def example-texture (ref nil))
+
+  (gl-do (dosync (ref-set example-texture 
+                          (get-texture (node-texture-filename tree "MaterialMyAx")))))
+
+  (first-node (match-field-fn :id 0x4000 :name "Axe") tree)
+
+  (count (each-path (match-field-fn :name "Axe") tree))
+
+  (map :name (each-node (match-field-fn :id 0x4000) tree))
+  
+  (count 
+   (each-node 
+    (match-field-fn :id 0x4130)
+    (first-node 
+     (match-field-fn :id 0x4000 :name "Gnarly_t")
+     tree)
+    ))
+
+  (def tree-node-mesh (node-mesh tree "Gnarly_t"))
+  (first-path (match-field-fn :id 0xA000 :name "MaterialMyAx") tree)
+
+  (gl-do (dosync (ref-set tree-mesh (new-mesh tree-node-mesh))))
   (check-node-mesh tree-node-mesh)
 
   (to-list (:vertices (first-node (match-id-fn 0x4110) tree)))

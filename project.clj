@@ -14,6 +14,8 @@
    [com.jme3/jme3-core "3.0.10"]
    [com.jme3/jme3-desktop "3.0.10"]
    [com.jme3/jme3-lwjgl "3.0.10"]
+   [com.jme3/jme3-blender "3.0.10"]
+   [com.jme3/jme3-plugins "3.0.10"]
    ]
   :repositories [["jme3" "http://updates.jmonkeyengine.org/maven/"]]
   :main deforma.core
