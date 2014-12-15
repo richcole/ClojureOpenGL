@@ -55,7 +55,7 @@
 
 (def view-perp-angle 45.0)
 (def view-aspect 1.0)
-(def view-z-near 1)
+(def view-z-near 0)
 (def view-z-far  100000)
 
 (defn create-color [r g b a]
@@ -282,8 +282,6 @@
    (view-clear)
 ))
 
-(gl-do (view-init))
-
 (defn -main []
   (reset-state)
   (gl-init)
@@ -306,6 +304,8 @@
    (tick)
    (Mouse/isCreated) 
    (reset-state)
+
+   (gl-do (view-init))
 
   (def tree-file (mmap-resource "dragon.3ds")) ; trees9.3ds
   (def tree (read-3ds tree-file))

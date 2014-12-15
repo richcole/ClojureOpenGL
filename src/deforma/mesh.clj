@@ -11,7 +11,7 @@
 
 (defrecord Buffer [id size])
 
-(defrecord Mesh [^Buffer vbo ^Buffer tbo ^Buffer ibo ^Texture tex ^Integer vao])
+(defrecord Mesh [^Buffer vbo ^Buffer tbo ^Buffer nbo ^Buffer ibo ^Texture tex ^Integer vao])
 
 (defn load-buffer [buf type]
   (let [id (GL15/glGenBuffers)]
@@ -36,6 +36,7 @@
   (let [e (:elements node-mesh)
         v (:vertices node-mesh)
         t (:tex-coords node-mesh)
+        n (:normals node-mesh)
         tex (load-texture (:texture-filename node-mesh))
 
         vao  (GL30/glGenVertexArrays)
@@ -44,13 +45,15 @@
         vbo  (load-buffer v GL15/GL_ARRAY_BUFFER)
         _    (GL20/glVertexAttribPointer 0 3 GL11/GL_FLOAT false 0 0)
 
-        tbo   nil
-        tbo  (load-buffer t  GL15/GL_ARRAY_BUFFER)
+        tbo  (load-buffer t GL15/GL_ARRAY_BUFFER)
         _    (GL20/glVertexAttribPointer 1 2 GL11/GL_FLOAT false 0 0)
+
+        nbo  (load-buffer n GL15/GL_ARRAY_BUFFER)
+        _    (GL20/glVertexAttribPointer 2 3 GL11/GL_FLOAT false 0 0)
 
         ibo  (load-buffer e GL15/GL_ELEMENT_ARRAY_BUFFER)
         ]
-        (Mesh. vbo tbo ibo tex vao)))
+        (Mesh. vbo tbo nbo ibo tex vao)))
   
 (defn new-triangle-mesh [tex]
   (let [vao  (GL30/glGenVertexArrays)
@@ -66,11 +69,16 @@
         tbo  (load-buffer tbuf  GL15/GL_ARRAY_BUFFER)
         _    (GL20/glVertexAttribPointer 1 2 GL11/GL_FLOAT false 0 0)
 
+        nbuf (BufferUtils/createFloatBuffer (* 3 3))
+        nbuf (write-fbuf nbuf [0 0 -1.0   0 0 -1.0   0 0 -1.0])
+        nbo  (load-buffer nbuf GL15/GL_ARRAY_BUFFER)
+        _    (GL20/glVertexAttribPointer 2 3 GL11/GL_FLOAT false 0 0)
+
         ibuf (BufferUtils/createShortBuffer 3)
         ibuf (write-ibuf ibuf  [0 1 2])
         ibo  (load-buffer ibuf  GL15/GL_ELEMENT_ARRAY_BUFFER)
         ]
-        (Mesh. vbo tbo ibo tex vao)))
+        (Mesh. vbo tbo nbo ibo tex vao)))
 
 (defn render-mesh [mesh]
   (GL13/glActiveTexture GL13/GL_TEXTURE0)
@@ -79,6 +87,7 @@
   (GL30/glBindVertexArray (:vao mesh))
   (GL20/glEnableVertexAttribArray 0)
   (GL20/glEnableVertexAttribArray 1)
+  (GL20/glEnableVertexAttribArray 2)
  
   (GL15/glBindBuffer GL15/GL_ELEMENT_ARRAY_BUFFER (:id (:ibo mesh)))
   (GL11/glDrawElements GL11/GL_TRIANGLES (:size (:ibo mesh)) GL11/GL_UNSIGNED_SHORT 0)
