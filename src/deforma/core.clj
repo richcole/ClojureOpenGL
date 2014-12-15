@@ -3,7 +3,8 @@
            [org.lwjgl.util.glu GLU]
            [org.lwjgl BufferUtils]
            [org.lwjgl.input Keyboard Mouse]
-           [com.jme3.math Quaternion Vector3f])
+           [com.jme3.math Quaternion Vector3f]
+           )
   (:use  deforma.gl_thread
          deforma.shaders
          deforma.images
@@ -11,6 +12,8 @@
          deforma.mesh
          deforma.load3ds
          deforma.mmap
+         deforma.vector
+         deforma.cubes
          )
   (:gen-class))
 
@@ -25,30 +28,6 @@
      ^Double mx 
      ^Double my
      ^Boolean mouse-grabbed])
-
-(defn vector3f [x y z]
-  (Vector3f. x y z))
-
-(def ZERO (Vector3f/ZERO))
-(def U0 (Vector3f/UNIT_X))
-(def U1 (Vector3f/UNIT_Y))
-(def U2 (Vector3f/UNIT_Z))
-
-(defn vminus 
-  ([^Vector3f v]   (.negate v))
-  ([^Vector3f u ^Vector3f v] (.add u (.negate v))))
-
-(defn vplus [^Vector3f u ^Vector3f v] (.add u v))
-
-(defn vcross [^Vector3f u ^Vector3f v] (.cross u v))
-
-(defn svtimes [^Float s ^Vector3f u] (.mult u s))
-
-(defn qvtimes [^Quaternion q ^Vector3f u] (.mult q u))
-
-(defn vx [u] (.x u)) 
-(defn vy [u] (.y u)) 
-(defn vz [u] (.z u))
 
 (def initial-state
   (State. ZERO
@@ -148,19 +127,10 @@
    (vx at ) (vy at ) (vz at ) 
    (vx up ) (vy up ) (vz up )))
 
-(defn update-mouse-grabbed [state]
-  (if (:mouse-grabbed state)
-    (when (not (Mouse/isGrabbed)) (Mouse/setGrabbed true))
-    (when (Mouse/isGrabbed) (Mouse/setGrabbed false)))
-  state)
+(declare update-input-state)
 
 (defn render []
-  (dosync
-      (ref-set game-state 
-               (-> @game-state 
-                   update-state-with-keyboard-input
-                   update-state-with-mouse-input
-                   update-mouse-grabbed)))
+  (update-input-state)
   (view-clear)
 
   (let [{:keys [pos fwd up]} @game-state]
@@ -252,10 +222,6 @@
         pos (vplus pos (svtimes (* dt speed) vel))]
     (assoc state :pos pos)))
 
-(defn from-angles [^Double x ^Double y ^Double z]
-  (let [q (Quaternion.)]
-    (.fromAngles q x y z)))
-
 (defn screen-scale [^Double x]
   (/ x 500.0))
 
@@ -274,6 +240,20 @@
       update-direction
       update-velocity
       (update-position dt)))
+
+(defn update-mouse-grabbed [state]
+  (if (:mouse-grabbed state)
+    (when (not (Mouse/isGrabbed)) (Mouse/setGrabbed true))
+    (when (Mouse/isGrabbed) (Mouse/setGrabbed false)))
+  state)
+
+(defn update-input-state []
+  (dosync
+      (ref-set game-state 
+               (-> @game-state 
+                   update-state-with-keyboard-input
+                   update-state-with-mouse-input
+                   update-mouse-grabbed))))
 
 (defn tick []
   (let [dt 0.01]
@@ -365,8 +345,23 @@
   (to-list (:vertices (first-node (match-id-fn 0x4110) tree)))
   (count (to-list (:elements (first-node (match-id-fn 0x4120) tree))))
 
-(count (to-list (:elements (node-mesh (first-node (match-name-fn "Cube") tree)))))
+  (def cm (cube-mesh @cubes))
+  (count (to-list (:vertices cm)))
+  (count (to-list (:elements cm)))
+  (count (to-list (:tex-coords cm)))
 
+  (defn random-blocks [n]
+    (doall (for [x (range 0 n)]
+             (vector3f (rand-int 10) (rand-int 10) (rand-int 10)))))
+  (gl-do 
+   (dosync 
+    (ref-set cubes 
+             (reduce add-cube @cubes (random-blocks 100)))
+    (add-cube @cubes (vector3f 0 1 1))
+    (ref-set tree-mesh (new-mesh (cube-mesh @cubes)))))
+  
+  (gl-do (dosync (ref-set tree-mesh (new-mesh cm))))
+  (count (to-list (:elements (node-mesh (first-node (match-name-fn "Cube") tree)))))
 
   (def tm (ref nil))
   (gl-do (render-mesh @tm))

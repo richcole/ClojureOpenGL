@@ -11,11 +11,12 @@
 
 (defrecord Buffer [id size])
 
-(defrecord Mesh [^Buffer vbo ^Buffer tbo ^Buffer ido ^Texture tex ^Integer vao])
+(defrecord Mesh [^Buffer vbo ^Buffer tbo ^Buffer ibo ^Texture tex ^Integer vao])
 
 (defn load-buffer [buf type]
   (let [id (GL15/glGenBuffers)]
     (GL15/glBindBuffer type id)
+    (.rewind buf)
     (GL15/glBufferData type buf GL15/GL_STATIC_DRAW)
     (Buffer. id (.capacity buf))))
 
@@ -79,8 +80,8 @@
   (GL20/glEnableVertexAttribArray 0)
   (GL20/glEnableVertexAttribArray 1)
  
-  (GL15/glBindBuffer GL15/GL_ELEMENT_ARRAY_BUFFER (:id (:ido mesh)))
-  (GL11/glDrawElements GL11/GL_TRIANGLES (:size (:ido mesh)) GL11/GL_UNSIGNED_SHORT 0)
+  (GL15/glBindBuffer GL15/GL_ELEMENT_ARRAY_BUFFER (:id (:ibo mesh)))
+  (GL11/glDrawElements GL11/GL_TRIANGLES (:size (:ibo mesh)) GL11/GL_UNSIGNED_SHORT 0)
     
   (GL15/glBindBuffer GL15/GL_ELEMENT_ARRAY_BUFFER 0)
   (GL20/glDisableVertexAttribArray 0)
