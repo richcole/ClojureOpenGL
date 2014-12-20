@@ -140,7 +140,7 @@
 (Math/floor (avg 1 2))
 
 (defn terrain-map [dx dy]
-  (cubes-from-height-map (height-map {} 0 0 dx dy 1.0 2.0 3.0 4.0) [dx dy]))
+  (cubes-from-height-map (height-map {} 0 0 dx dy 2.0 2.0 2.0 2.0) [dx dy]))
 
 (count
   (cubes-from-height-map (height-map {} 0 0 50 50 1.0 2.0 3.0 4.0) [50 50]))

@@ -6,54 +6,11 @@
   (:use deforma.mmap)
   (:gen-class))
 
-(defn read-u8 [^ByteBuffer f]
-  (bit-and (.getByte f) 0xff))
-
-(defn read-u16 [^ByteBuffer f]
-  (bit-and (.getShort f) 0xffff))
-
-(defn read-u32 [^ByteBuffer f]
-  (bit-and (long (.getInt f)) 0xffffffff))
-
-(defn read-byte [^ByteBuffer f]
-  (.get f))
-
-(defn not-zero [x]
-  (not (= x 0)))
-
-(defn read-strz [^ByteBuffer f]
-  (let [s (apply str (map char 
-                          (take-while not-zero (repeatedly (fn [] (.get f))))))]
-    s))
-
 (declare read-nodes)
 (declare read-node)
 
-(defn not-nil? [x] (not (nil? x)))
-
 (defn read-nodes [f end]
   (doall (take-while not-nil? (repeatedly (fn [] (read-node f end))))))
-
-(defn short-buf [buf]
-  (let [nbuf (.duplicate buf)
-        _    (.order nbuf ByteOrder/LITTLE_ENDIAN)
-        rbuf (.asShortBuffer nbuf)]
-    (.limit rbuf (/ (.limit buf) 2))
-    rbuf))
-
-(defn float-buf [buf]
-  (let [nbuf (.duplicate buf)
-        _    (.order nbuf ByteOrder/LITTLE_ENDIAN)
-        rbuf (.asFloatBuffer nbuf)]
-    (.limit rbuf (/ (.limit buf) 4))
-    rbuf))
-
-(defn read-buf [f buf-len]
-  (println "buf-len" buf-len)
-  (let [buf (.slice f)]
-    (.limit buf buf-len)
-    (.position f (+ (.position f) buf-len))
-    buf))
 
 (defn read-elements [f]
   (let [num-elements (read-u16 f)]

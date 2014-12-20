@@ -42,9 +42,11 @@
 
 (defonce game-state (ref initial-state))
 (defonce simple-program (ref nil))
+(defonce anim-program (ref nil))
 (defonce stone-texture (ref nil))
 (defonce tm (ref nil))
 (def tree-mesh (ref nil))
+(def anim-mesh (ref nil))
 
 (defn reset-state []
   (dosync (ref-set game-state initial-state)))
@@ -55,7 +57,7 @@
 
 (def view-perp-angle 45.0)
 (def view-aspect 1.0)
-(def view-z-near 0)
+(def view-z-near 1)
 (def view-z-far  100000)
 
 (defn create-color [r g b a]
@@ -136,9 +138,18 @@
   (let [{:keys [pos fwd up]} @game-state]
     (look-at pos (vplus pos fwd) up))
 
-  (when @simple-program (use-program @simple-program))
-  (when @tm (render-mesh @tm))
-  (when @tree-mesh (render-mesh @tree-mesh))
+  (when @simple-program (use-program @simple-program)
+        (comment (when @tm (render-mesh @tm)))
+        (when @tree-mesh (render-mesh @tree-mesh))
+        )
+
+  (when @anim-mesh 
+    (render-anim-mesh @anim-program @anim-mesh))
+
+  (when false
+    (when (and @simple-program @anim-mesh)
+      (use-program @simple-program)
+      (render-mesh @anim-mesh)))
 
   (when false
     (GL11/glEnable GL11/GL_TEXTURE_2D)
@@ -272,7 +283,12 @@
     (ref-set simple-program
              (new-program-from-shader-resources 
               [["simple-vert.glsl" GL20/GL_VERTEX_SHADER]
-               ["simple-frag.glsl" GL20/GL_FRAGMENT_SHADER]])))))
+               ["simple-frag.glsl" GL20/GL_FRAGMENT_SHADER]])))
+   (dosync 
+    (ref-set anim-program
+             (new-program-from-shader-resources 
+              [["anim-vert.glsl" GL20/GL_VERTEX_SHADER]
+               ["anim-frag.glsl" GL20/GL_FRAGMENT_SHADER]])))))
 
 (defn gl-init []
   (gl-do 
@@ -360,9 +376,26 @@
     (add-cube @cubes (vector3f 0 1 1))
     (ref-set tree-mesh (new-mesh (cube-mesh @cubes)))))
 
+  (gl-do (dosync (ref-set tm (new-mesh (new-triangle-anim-node-mesh @stone-texture)))))
+
+  (def ta (ref nil))
+  (gl-do (dosync (ref-set ta (new-triangle-anim-node-mesh @stone-texture))))
+
+  (to-list (:normals @ta))
+  @tm
+
   (gl-do 
    (dosync 
-    (ref-set tree-mesh (new-mesh (cube-mesh (terrain-map 20 20))))))
+    (ref-set tree-mesh (new-mesh (cube-mesh (terrain-map 15 15))))))
+
+  (gl-do 
+   (dosync 
+    (ref-set anim-mesh (new-triangle-anim-mesh @stone-texture))))
+
+  (gl-do
+   (when @anim-mesh (render-anim-mesh @anim-program @anim-mesh)))
+
+  (:id (:tribuf @anim-mesh))
 
   (def t (terrain-map 2 2))
   (to-list (:normals t))
@@ -389,6 +422,8 @@
    (GL11/glDisable GL11/GL_CULL_FACE)
    (GL11/glFrontFace GL11/GL_CW)
    )
+
+   (gl-do view-persp)
 )
 
 
