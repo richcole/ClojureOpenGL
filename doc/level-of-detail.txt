@@ -1,0 +1,5 @@
+
+For the terrain we can compute sky boxes of each terrain set and when
+you are outside the terrain area we render it using the skybox. 
+
+The sky boxes can be hierarchical.

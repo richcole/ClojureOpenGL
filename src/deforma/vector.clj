@@ -33,7 +33,43 @@
 
 (defn qvtimes [^Quaternion q ^Vector3f u] (.mult q u))
 
+(defn q-to-list [^Quaternion q] [(.getX q) (.getY q) (.getZ q) (.getW q)])
+
 (defn vx [u] (.x u)) 
 (defn vy [u] (.y u)) 
 (defn vz [u] (.z u))
+
+(comment 
+  (defn ldot [u v]
+    (if (empty? u) 
+      0
+      (+ (* (first u) (first v)) 
+         (ldot (rest u) (rest v)))))
+
+  (defn lplus [u v]
+    (if (empty? u) 
+      []
+      (cons (+ (first u) (first v))
+         (lplus (rest u) (rest v)))))
+    
+  (defn lstimes [s u]
+    (map #(* s %) u))
+    
+  
+  (let [a (q-to-list (from-angles 0.4 0   0))
+        b (q-to-list (from-angles 0   0   0))
+        c (ldot a b)
+        aa (ldot a a)
+        bb (ldot b b)
+        t  0
+        angle (Math/acos c)
+        sa (Math/sin angle)
+        sx (/ (Math/sin (* (- 1 t) angle)) sa)
+        sz (/ (Math/sin (* t angle)) sa)
+        r  (lplus (lstimes sx a) (lstimes sz b))]
+    [aa bb c angle sx sz r a]
+  )
+)
+
+      
 

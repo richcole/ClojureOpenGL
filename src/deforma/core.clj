@@ -1,5 +1,5 @@
 (ns deforma.core
-  (:import [org.lwjgl.opengl Display DisplayMode GL11 GL12 GL13 GL20]
+  (:import [org.lwjgl.opengl Display DisplayMode GL11 GL12 GL13 GL20 GL30 GL31]
            [org.lwjgl.util.glu GLU]
            [org.lwjgl BufferUtils]
            [org.lwjgl.input Keyboard Mouse]
@@ -288,7 +288,21 @@
     (ref-set anim-program
              (new-program-from-shader-resources 
               [["anim-vert.glsl" GL20/GL_VERTEX_SHADER]
-               ["anim-frag.glsl" GL20/GL_FRAGMENT_SHADER]])))))
+               ["anim-frag.glsl" GL20/GL_FRAGMENT_SHADER]]))
+    )
+   (let [prog-id (:id @anim-program)
+         ql (GL31/glGetUniformBlockIndex prog-id "Q")
+         pl (GL31/glGetUniformBlockIndex prog-id "P")
+         vl (GL31/glGetUniformBlockIndex prog-id "DV")
+         bl (GL31/glGetUniformBlockIndex prog-id "B")
+         ]
+     (GL31/glUniformBlockBinding prog-id ql 0)
+     (GL31/glUniformBlockBinding prog-id pl 1)
+     (GL31/glUniformBlockBinding prog-id vl 2)
+     (GL31/glUniformBlockBinding prog-id bl 3)
+    )))
+  
+
 
 (defn gl-init []
   (gl-do 
@@ -386,11 +400,14 @@
 
   (gl-do 
    (dosync 
-    (ref-set tree-mesh (new-mesh (cube-mesh (terrain-map 15 15))))))
+    (ref-set tree-mesh (new-mesh (cube-mesh (terrain-map 20 20))))))
 
+  (gl-compile-shaders)
   (gl-do 
    (dosync 
     (ref-set anim-mesh (new-triangle-anim-mesh @stone-texture))))
+
+  (to-list (:bones (new-triangle-anim-node-mesh @stone-texture)))
 
   (gl-do
    (when @anim-mesh (render-anim-mesh @anim-program @anim-mesh)))

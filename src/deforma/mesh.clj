@@ -7,7 +7,8 @@
            deforma.textures.Texture
            )
   (:use deforma.textures
-        deforma.shaders)
+        deforma.shaders
+        deforma.vector)
   (:gen-class))
 
 (defrecord Buffer [id size])
@@ -24,9 +25,10 @@
                      ^Buffer nbo 
                      ^Buffer bbo 
                      ^Buffer ibo 
+                     ^Buffer qbuf 
                      ^Buffer pbuf 
-                     ^Buffer trbuf 
-                     ^Buffer tribuf 
+                     ^Buffer dvbuf
+                     ^Buffer bbuf
                      ^Texture tex 
                      ^Integer vao])
 
@@ -141,10 +143,13 @@
         v   (:vertices   node-mesh)
         t   (:tex-coords node-mesh)
         n   (:normals    node-mesh)
-        b   (:bone-index node-mesh)
-        p   (:parents    node-mesh)
-        tr  (:tr node-mesh)
-        tri (:tr-index node-mesh)
+        bn  (:bones      node-mesh)
+
+        q   (:q    node-mesh)
+        p   (:p    node-mesh)
+        dv  (:dv   node-mesh)
+        b   (:b    node-mesh)
+
         tex (node-mesh-get-texture node-mesh)
 
         vao  (GL30/glGenVertexArrays)
@@ -159,35 +164,51 @@
         nbo  (load-buffer n GL15/GL_ARRAY_BUFFER)
         _    (GL20/glVertexAttribPointer 2 3 GL11/GL_FLOAT false 0 0)
 
-        bbo  (load-buffer b GL15/GL_ARRAY_BUFFER)
-        _    (GL20/glVertexAttribPointer 3 1 GL11/GL_SHORT false 0 0)
+        bbo  (load-buffer bn GL15/GL_ARRAY_BUFFER)
+        _    (GL20/glVertexAttribPointer 3 1 GL11/GL_FLOAT false 0 0)
 
         ibo  (load-buffer e GL15/GL_ELEMENT_ARRAY_BUFFER)
 
-        pbuf   (load-buffer p GL31/GL_UNIFORM_BUFFER)
-        trbuf  (load-buffer tr GL31/GL_UNIFORM_BUFFER)
-        tribuf (load-buffer tri GL31/GL_UNIFORM_BUFFER)
+        qbuf  (load-buffer q GL31/GL_UNIFORM_BUFFER)
+        pbuf  (load-buffer p GL31/GL_UNIFORM_BUFFER)
+        dvbuf (load-buffer dv GL31/GL_UNIFORM_BUFFER)
+        bbuf  (load-buffer b GL31/GL_UNIFORM_BUFFER)
 
         ]
-        (AnimMesh. vbo tbo nbo bbo ibo pbuf trbuf tribuf tex vao)
+        (AnimMesh. vbo tbo nbo bbo ibo qbuf pbuf dvbuf bbuf tex vao)
         ))
 
 (defn new-triangle-anim-node-mesh [tex]
   {:elements   (to-sbuf [0 1 2])
-   :vertices   (to-fbuf [-1.0 1.0 -9.0 1.0 1.0 -9.0 1.0 -1.0 -9.0])
+   :vertices   (to-fbuf [0.0 0.0 0.0 
+                         1.0 0.0 0.0 
+                         1.0 1.0 0.0])
    :tex-coords (to-fbuf [0 1 1 1 1 0])
    :normals    (to-fbuf [0 0 -1.0   0 0 -1.0   0 0 -1.0])
-   :bone-index (to-ibuf [0 0 0])
-   :parents    (to-ibuf [-1])
-   :tr         (to-fbuf [1  0  0  0 
-                         0  1  0  0
-                         0  0  1  0
-                         1  0  0  1])
-   :tr-index   (to-ibuf [0])
-   :tex        tex})
+   :bones      (to-fbuf [1 1 1])
+   :q       (to-fbuf 
+             (apply concat 
+                    (map q-to-list 
+                         [; -- frame 1 
+                          (from-angles 0 0 0) ; bone 0
+                          (from-angles 0 0 0) ; bone 1
+                          ; -- frame 2
+                          (from-angles 3.0 0 0) ; bone 0
+                          (from-angles 3.0 0 0) ; bone 1
+                          ])))  ; bone frame quat
+   :p       (to-ibuf [-1 0])    ; parent pointer
+   :dv      (to-fbuf [1 1 1 1 1 1])  ; displayment from parent
+   :b       (to-ibuf [2 2])     ; num-bones num-frames
+   :tex     tex})
 
 (defn new-triangle-anim-mesh [tex]
   (new-anim-mesh (new-triangle-anim-node-mesh tex)))
+
+(defn get-tick []
+  (/ (mod (java.lang.System/currentTimeMillis) 5000) 5000.0))
+
+(defn get-frame []
+  (mod (int (/ (java.lang.System/currentTimeMillis) 5000)) 2))
 
 (defn render-anim-mesh [anim-program mesh]
   (if anim-program
@@ -195,17 +216,16 @@
 
       (use-program anim-program)
       
-      (let [prog-id (:id anim-program) 
-            q-loc  (GL31/glGetUniformBlockIndex prog-id "Q")
-            p-loc  (GL31/glGetUniformBlockIndex prog-id "P")
-            qi-loc (GL31/glGetUniformBlockIndex prog-id "QI")]
-;        (println "q-loc" q-loc "ploc" p-loc "qi-loc" qi-loc)
-        (GL31/glUniformBlockBinding prog-id q-loc  0)
-        (GL31/glUniformBlockBinding prog-id p-loc  1)
-        (GL31/glUniformBlockBinding prog-id qi-loc 2)
-        (GL30/glBindBufferBase GL31/GL_UNIFORM_BUFFER 0 (:id (:trbuf mesh)))
+      (let [prog-id (:id anim-program)
+            alpha (get-tick)
+            frame (get-frame)
+            ]
+        (GL30/glBindBufferBase GL31/GL_UNIFORM_BUFFER 0 (:id (:qbuf mesh)))
         (GL30/glBindBufferBase GL31/GL_UNIFORM_BUFFER 1 (:id (:pbuf mesh)))
-        (GL30/glBindBufferBase GL31/GL_UNIFORM_BUFFER 2 (:id (:tribuf mesh)))
+        (GL30/glBindBufferBase GL31/GL_UNIFORM_BUFFER 2 (:id (:dvbuf mesh)))
+        (GL30/glBindBufferBase GL31/GL_UNIFORM_BUFFER 3 (:id (:bbuf mesh)))
+        (GL20/glUniform1i (GL20/glGetUniformLocation prog-id "frame") frame)
+        (GL20/glUniform1f (GL20/glGetUniformLocation prog-id "alpha") alpha)
         )
 
       (GL13/glActiveTexture GL13/GL_TEXTURE0)
