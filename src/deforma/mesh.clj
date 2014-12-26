@@ -36,8 +36,8 @@
                      ^Integer vao])
 
 (defn load-buffer [buf type]
-  (let [id (BufferGID. )]
-    (GL15/glBindBuffer type (.gid id))
+  (let [id (BufferGID.)]
+    (GL15/glBindBuffer type (.getGid id))
     (.rewind buf)
     (GL15/glBufferData type buf GL15/GL_STATIC_DRAW)
     (Buffer. id (.capacity buf))))

@@ -6,7 +6,7 @@
   (:use deforma.gid)
   (:gen-class))
 
-(defrecord Framebuffer [fb rb tb])
+(defrecord Framebuffer [width height fb rb tb])
 
 (defn new-frame-buffer [^Integer width ^Integer height]
   (let [fb (FrameBufferGID.)
@@ -26,5 +26,15 @@
     (GL30/glBindRenderbuffer GL30/GL_RENDERBUFFER (.getGid rb))
     (GL30/glRenderbufferStorage GL30/GL_RENDERBUFFER GL14/GL_DEPTH_COMPONENT24 width height);
 
-    (Framebuffer. fb rb tb)
-    ))
+    (let [result (Framebuffer. width height fb rb tb)]
+      (GL30/glBindFramebuffer GL30/GL_FRAMEBUFFER 0)
+      result
+    )))
+
+(defn render-framebuffer [^Framebuffer fb render-fn]
+  (GL30/glBindFramebuffer GL30/GL_FRAMEBUFFER (.getGid (:fb fb)))
+  (GL11/glViewport 0 0 (:width fb) (:height fb))
+  (render-fn)
+)
+  
+  

@@ -324,6 +324,7 @@
   (gl-compile-shaders)
   (gl-load-textures)
   (gl-do (dosync (ref-set tm (new-triangle-mesh @stone-texture))))
+  
 
   (future (while true (gl-do (render))))
   (future (catch-and-print-ex (while true (tick))))
@@ -341,8 +342,11 @@
    (Mouse/isCreated) 
    (reset-state)
    
+   ref-set tm
+   
    (def fb (ref nil))
    (gl-do (dosync (ref-set fb (new-frame-buffer 256 256))))
+   (gl-do (GL30/glBindFramebuffer GL30/GL_FRAMEBUFFER 0))
 
    (gl-do (view-init))
 
