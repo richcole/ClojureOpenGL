@@ -4,6 +4,7 @@
            [org.lwjgl BufferUtils]
            [org.lwjgl.input Keyboard Mouse]
            [com.jme3.math Quaternion Vector3f]
+           java.lang.System
            )
   (:use  deforma.gl_thread
          deforma.shaders
@@ -14,6 +15,7 @@
          deforma.mmap
          deforma.vector
          deforma.cubes
+         deforma.billboard
          )
   (:gen-class))
 
@@ -131,6 +133,24 @@
 
 (declare update-input-state)
 
+(defn render-triangle []
+  (GL11/glEnable GL11/GL_TEXTURE_2D)
+  (GL11/glBindTexture GL11/GL_TEXTURE_2D (:id @stone-texture))
+  (use-program @simple-program)
+  
+  (GL11/glBegin GL11/GL_TRIANGLES)
+  
+  (GL11/glTexCoord2f 0 1)
+  (GL11/glVertex3f -1.0  1.0 -10.0)
+  
+  (GL11/glTexCoord2f 1 1)
+  (GL11/glVertex3f  1.0  1.0 -10.0)
+  
+  (GL11/glTexCoord2f 1 0)
+  (GL11/glVertex3f  1.0 -1.0 -10.0)
+  (GL11/glEnd)
+)
+
 (defn render []
   (update-input-state)
   (view-clear)
@@ -139,9 +159,9 @@
     (look-at pos (vplus pos fwd) up))
 
   (when @simple-program (use-program @simple-program)
-        (comment (when @tm (render-mesh @tm)))
-        (when @tree-mesh (render-mesh @tree-mesh))
-        )
+    (when @tm (render-mesh @tm))
+    (when @tree-mesh (render-mesh @tree-mesh))
+  )
 
   (when @anim-mesh 
     (render-anim-mesh @anim-program @anim-mesh))
@@ -152,22 +172,8 @@
       (render-mesh @anim-mesh)))
 
   (when false
-    (GL11/glEnable GL11/GL_TEXTURE_2D)
-    (GL11/glBindTexture GL11/GL_TEXTURE_2D (:id @stone-texture))
-    (use-program @simple-program)
-    
-    (GL11/glBegin GL11/GL_TRIANGLES)
-    
-    (GL11/glTexCoord2f 0 1)
-    (GL11/glVertex3f -1.0  1.0 -10.0)
-    
-    (GL11/glTexCoord2f 1 1)
-    (GL11/glVertex3f  1.0  1.0 -10.0)
-    
-    (GL11/glTexCoord2f 1 0)
-    (GL11/glVertex3f  1.0 -1.0 -10.0)
-    (GL11/glEnd)
-    )
+    (render-triangle)
+  )
 
   (Display/update)
 )
@@ -334,6 +340,9 @@
    (tick)
    (Mouse/isCreated) 
    (reset-state)
+   
+   (def fb (ref nil))
+   (gl-do (dosync (ref-set fb (new-frame-buffer 256 256))))
 
    (gl-do (view-init))
 
@@ -402,6 +411,8 @@
    (dosync 
     (ref-set tree-mesh (new-mesh (cube-mesh (terrain-map 20 20))))))
 
+  (java.lang.System/gc)
+  
   (gl-compile-shaders)
   (gl-do 
    (dosync 
@@ -441,6 +452,11 @@
    )
 
    (gl-do view-persp)
+
+  (gl-do
+    (load-texture "stone_texture.jpg"))
+
+
 )
 
 

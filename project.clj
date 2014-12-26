@@ -22,6 +22,7 @@
   :target-path "target/%s"
   :profiles {:uberjar {:aot :all}}
   :native-path "native"
+  :java-source-paths ["src/java/"]
   )
 
 ;   [org.clojars.trptcolin/core.async "0.1.242.1"]

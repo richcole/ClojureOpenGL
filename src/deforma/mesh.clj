@@ -5,13 +5,16 @@
            java.nio.IntBuffer
            java.nio.ShortBuffer
            deforma.textures.Texture
+           deforma.BufferGID
            )
   (:use deforma.textures
         deforma.shaders
-        deforma.vector)
+        deforma.vector
+        deforma.gid
+        )
   (:gen-class))
 
-(defrecord Buffer [id size])
+(defrecord Buffer [^BufferGID id size])
 
 (defrecord Mesh [^Buffer vbo 
                  ^Buffer tbo 
@@ -33,8 +36,8 @@
                      ^Integer vao])
 
 (defn load-buffer [buf type]
-  (let [id (GL15/glGenBuffers)]
-    (GL15/glBindBuffer type id)
+  (let [id (BufferGID. )]
+    (GL15/glBindBuffer type (.gid id))
     (.rewind buf)
     (GL15/glBufferData type buf GL15/GL_STATIC_DRAW)
     (Buffer. id (.capacity buf))))
@@ -122,14 +125,14 @@
 
 (defn render-mesh [mesh]
   (GL13/glActiveTexture GL13/GL_TEXTURE0)
-  (GL11/glBindTexture GL11/GL_TEXTURE_2D (:id (:tex mesh)))
+  (GL11/glBindTexture GL11/GL_TEXTURE_2D (gid (:tex mesh)))
 
   (GL30/glBindVertexArray (:vao mesh))
   (GL20/glEnableVertexAttribArray 0)
   (GL20/glEnableVertexAttribArray 1)
   (GL20/glEnableVertexAttribArray 2)
  
-  (GL15/glBindBuffer GL15/GL_ELEMENT_ARRAY_BUFFER (:id (:ibo mesh)))
+  (GL15/glBindBuffer GL15/GL_ELEMENT_ARRAY_BUFFER (gid (:ibo mesh)))
   (GL11/glDrawElements GL11/GL_TRIANGLES (:size (:ibo mesh)) GL11/GL_UNSIGNED_SHORT 0)
     
   (GL15/glBindBuffer GL15/GL_ELEMENT_ARRAY_BUFFER 0)
@@ -216,20 +219,20 @@
 
       (use-program anim-program)
       
-      (let [prog-id (:id anim-program)
+      (let [prog-id (gid anim-program)
             alpha (get-tick)
             frame (get-frame)
             ]
-        (GL30/glBindBufferBase GL31/GL_UNIFORM_BUFFER 0 (:id (:qbuf mesh)))
-        (GL30/glBindBufferBase GL31/GL_UNIFORM_BUFFER 1 (:id (:pbuf mesh)))
-        (GL30/glBindBufferBase GL31/GL_UNIFORM_BUFFER 2 (:id (:dvbuf mesh)))
-        (GL30/glBindBufferBase GL31/GL_UNIFORM_BUFFER 3 (:id (:bbuf mesh)))
+        (GL30/glBindBufferBase GL31/GL_UNIFORM_BUFFER 0 (gid (:qbuf mesh)))
+        (GL30/glBindBufferBase GL31/GL_UNIFORM_BUFFER 1 (gid (:pbuf mesh)))
+        (GL30/glBindBufferBase GL31/GL_UNIFORM_BUFFER 2 (gid (:dvbuf mesh)))
+        (GL30/glBindBufferBase GL31/GL_UNIFORM_BUFFER 3 (gid (:bbuf mesh)))
         (GL20/glUniform1i (GL20/glGetUniformLocation prog-id "frame") frame)
         (GL20/glUniform1f (GL20/glGetUniformLocation prog-id "alpha") alpha)
         )
 
       (GL13/glActiveTexture GL13/GL_TEXTURE0)
-      (GL11/glBindTexture GL11/GL_TEXTURE_2D (:id (:tex mesh)))
+      (GL11/glBindTexture GL11/GL_TEXTURE_2D (gid (:tex mesh)))
 
       (GL30/glBindVertexArray (:vao mesh))
       (GL20/glEnableVertexAttribArray 0)
@@ -237,7 +240,7 @@
       (GL20/glEnableVertexAttribArray 2)
       (GL20/glEnableVertexAttribArray 3)
 
-      (GL15/glBindBuffer GL15/GL_ELEMENT_ARRAY_BUFFER (:id (:ibo mesh)))
+      (GL15/glBindBuffer GL15/GL_ELEMENT_ARRAY_BUFFER (gid (:ibo mesh)))
       (GL11/glDrawElements GL11/GL_TRIANGLES (:size (:ibo mesh)) GL11/GL_UNSIGNED_SHORT 0)
       
       (GL15/glBindBuffer GL15/GL_ELEMENT_ARRAY_BUFFER 0)

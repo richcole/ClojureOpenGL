@@ -3,20 +3,17 @@
            javax.imageio.ImageIO
            org.lwjgl.BufferUtils 
            java.nio.IntBuffer
-           java.awt.image.BufferedImage)
+           java.awt.image.BufferedImage
+           deforma.TextureGID)
   (:use  deforma.images)
   (:gen-class))
 
-(defrecord Texture [^Integer id ^Integer width ^Integer height])
+(defrecord Texture [^TextureGID id ^Integer width ^Integer height])
 
-(defn new-texture 
-  (^Texture 
-   [width height]
-   (let [^IntBuffer id-buf (BufferUtils/createIntBuffer 1)]
-     (GL11/glGenTextures id-buf)
-     (let [id (.get id-buf 0)]
-       (assert (> id 0))
-       (Texture. id width height)))))
+(defn new-texture [width height]
+  (let [id (TextureGID. (GL11/glGenTextures))]
+    (assert (> (.gid id) 0))
+    (Texture. id width height)))
 
 (defn load-texture [path]
   (let [image   (load-image path)
@@ -25,7 +22,7 @@
         buf     (get-rgba image)
         texture (new-texture width height)]
 
-    (GL11/glBindTexture GL11/GL_TEXTURE_2D (:id texture))
+    (GL11/glBindTexture GL11/GL_TEXTURE_2D (.gid (:id texture)))
 
     (GL11/glTexParameteri GL11/GL_TEXTURE_2D 
                           GL11/GL_TEXTURE_WRAP_S GL11/GL_REPEAT)
@@ -59,13 +56,12 @@
                 (ref-set texture-assets (assoc @texture-assets path texture))
                 texture)))
       texture))
-  
 
 
-    
-    
-    
-              
+
+
+
+
 
 
 
