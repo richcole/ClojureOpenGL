@@ -98,7 +98,18 @@
         ]
         (Mesh. vbo tbo nbo ibo tex vao)))
 
+(defn new-triangle-node-mesh [tex]
+  {:elements    (to-sbuf [0 1 2])
+   :vertices   (to-fbuf [-1.0 1.0 -10.0 1.0 1.0 -10.0 1.0 -1.0 -10.0])
+   :tex-coords  (to-fbuf [0 1 1 1 1 0])
+   :normals     (to-fbuf [0 0 -1.0   0 0 -1.0   0 0 -1.0])
+   :tex         tex
+ })
+
 (defn new-triangle-mesh [tex]
+  (new-mesh (new-triangle-node-mesh tex)))
+  
+(defn new-triangle-mesh-2 [tex]
   (let [vao  (GL30/glGenVertexArrays)
         _    (GL30/glBindVertexArray vao)
 

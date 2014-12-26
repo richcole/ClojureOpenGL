@@ -100,7 +100,6 @@
 
   (GL11/glPixelStorei GL11/GL_UNPACK_ALIGNMENT 1)
   (GL11/glHint GL11/GL_PERSPECTIVE_CORRECTION_HINT GL11/GL_NICEST)
-  (GL11/glViewport 0 0 display-width display-height)
   (GL11/glLightModel GL11/GL_LIGHT_MODEL_AMBIENT gray9)
 )
 
@@ -151,7 +150,18 @@
   (GL11/glEnd)
 )
 
+(defn basic-render []
+  (view-clear)
+  (let [{:keys [pos fwd up]} @game-state]
+    (look-at pos (vplus pos fwd) up))
+  (when @simple-program (use-program @simple-program)
+    (when @tm (render-mesh @tm))
+    (when @tree-mesh (render-mesh @tree-mesh))
+  )
+)  
+
 (defn render []
+  (GL11/glViewport 0 0 display-width display-height)
   (update-input-state)
   (view-clear)
 
@@ -346,7 +356,14 @@
    
    (def fb (ref nil))
    (gl-do (dosync (ref-set fb (new-frame-buffer 256 256))))
-   (gl-do (GL30/glBindFramebuffer GL30/GL_FRAMEBUFFER 0))
+   (gl-do (render-framebuffer @fb basic-render))
+   (gl-do (dosync (ref-set tm (new-triangle-mesh (:tb @fb)))))
+   (gl-do (dosync (ref-set tm (new-triangle-mesh @stone-texture))))
+   
+   (def tm1 (ref nil))
+   (def tm2 (ref nil))
+   (gl-do (dosync (ref-set tm1 (new-triangle-anim-node-mesh (:tb @fb)))))
+   (gl-do (dosync (ref-set tm2 (new-mesh @tm1))))
 
    (gl-do (view-init))
 

@@ -2,6 +2,7 @@
   (:import [org.lwjgl.opengl GL11 GL12 GL14 GL20 GL21 GL30 GL31]
            deforma.FrameBufferGID deforma.RenderBufferGID deforma.TextureGID
            java.nio.ByteBuffer
+           deforma.textures.Texture
            )
   (:use deforma.gid)
   (:gen-class))
@@ -26,7 +27,7 @@
     (GL30/glBindRenderbuffer GL30/GL_RENDERBUFFER (.getGid rb))
     (GL30/glRenderbufferStorage GL30/GL_RENDERBUFFER GL14/GL_DEPTH_COMPONENT24 width height);
 
-    (let [result (Framebuffer. width height fb rb tb)]
+    (let [result (Framebuffer. width height fb rb (Texture. tb width height))]
       (GL30/glBindFramebuffer GL30/GL_FRAMEBUFFER 0)
       result
     )))
@@ -35,6 +36,7 @@
   (GL30/glBindFramebuffer GL30/GL_FRAMEBUFFER (.getGid (:fb fb)))
   (GL11/glViewport 0 0 (:width fb) (:height fb))
   (render-fn)
+  (GL30/glBindFramebuffer GL30/GL_FRAMEBUFFER 0)
 )
   
   
