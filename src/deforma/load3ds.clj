@@ -3,7 +3,7 @@
            [java.nio.channels FileChannel FileChannel$MapMode]
            [org.lwjgl BufferUtils]
            [java.io RandomAccessFile])
-  (:use deforma.mmap)
+  (:use deforma.mmap deforma.util)
   (:gen-class))
 
 (declare read-nodes)

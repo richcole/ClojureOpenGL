@@ -1,20 +1,17 @@
 (ns deforma.mesh
-  (:import [org.lwjgl.opengl GL11 GL12 GL13 GL15 GL20 GL21 GL30 GL31]
-           org.lwjgl.BufferUtils
-           java.nio.FloatBuffer
-           java.nio.IntBuffer
-           java.nio.ShortBuffer
-           deforma.textures.Texture
-           deforma.BufferGID
-           )
   (:use deforma.textures
+        deforma.buffers
         deforma.shaders
         deforma.vector
         deforma.gid
         )
+  (:import [org.lwjgl.opengl GL11 GL12 GL13 GL15 GL20 GL21 GL30 GL31]
+           deforma.textures.Texture
+           deforma.buffers.Buffer
+           deforma.BufferGID
+           )
   (:gen-class))
 
-(defrecord Buffer [^BufferGID id size])
 
 (defrecord Mesh [^Buffer vbo 
                  ^Buffer tbo 
@@ -34,43 +31,6 @@
                      ^Buffer bbuf
                      ^Texture tex 
                      ^Integer vao])
-
-(defn load-buffer [buf type]
-  (let [id (BufferGID.)]
-    (GL15/glBindBuffer type (.getGid id))
-    (.rewind buf)
-    (GL15/glBufferData type buf GL15/GL_STATIC_DRAW)
-    (Buffer. id (.capacity buf))))
-
-(defn write-fbuf [^FloatBuffer buf vs]
-  (doseq [v vs]
-    (.put buf (float v)))
-  (.flip buf)
-  buf)
-  
-(defn write-sbuf [^ShortBuffer buf vs]
-  (doseq [v vs]
-    (.put buf (short v)))
-  (.flip buf)
-  buf)
-
-(defn write-ibuf [^IntBuffer buf vs]
-  (doseq [v vs]
-    (.put buf (int v)))
-  (.flip buf)
-  buf)
-
-(defn to-sbuf [xs]
-  (let [buf (BufferUtils/createShortBuffer (count xs))]
-    (write-sbuf buf xs)))
-
-(defn to-ibuf [xs]
-  (let [buf (BufferUtils/createIntBuffer (count xs))]
-    (write-ibuf buf xs)))
-
-(defn to-fbuf [xs]
-  (let [buf (BufferUtils/createFloatBuffer (count xs))]
-    (write-fbuf buf xs)))
 
 (defn node-mesh-get-texture [node-mesh]
   (or (:tex node-mesh) (load-texture (:texture-filename node-mesh))))
@@ -108,31 +68,6 @@
 
 (defn new-triangle-mesh [tex]
   (new-mesh (new-triangle-node-mesh tex)))
-  
-(defn new-triangle-mesh-2 [tex]
-  (let [vao  (GL30/glGenVertexArrays)
-        _    (GL30/glBindVertexArray vao)
-
-        vbuf (BufferUtils/createFloatBuffer (* 3 3))
-        vbuf (write-fbuf vbuf [-1.0 1.0 -10.0 1.0 1.0 -10.0 1.0 -1.0 -10.0])
-        vbo  (load-buffer vbuf GL15/GL_ARRAY_BUFFER)
-        _    (GL20/glVertexAttribPointer 0 3 GL11/GL_FLOAT false 0 0)
-
-        tbuf (BufferUtils/createFloatBuffer (* 3 2))
-        tbuf (write-fbuf tbuf [0 1 1 1 1 0])
-        tbo  (load-buffer tbuf  GL15/GL_ARRAY_BUFFER)
-        _    (GL20/glVertexAttribPointer 1 2 GL11/GL_FLOAT false 0 0)
-
-        nbuf (BufferUtils/createFloatBuffer (* 3 3))
-        nbuf (write-fbuf nbuf [0 0 -1.0   0 0 -1.0   0 0 -1.0])
-        nbo  (load-buffer nbuf GL15/GL_ARRAY_BUFFER)
-        _    (GL20/glVertexAttribPointer 2 3 GL11/GL_FLOAT false 0 0)
-
-        ibuf (BufferUtils/createShortBuffer 3)
-        ibuf (write-sbuf ibuf  [0 1 2])
-        ibo  (load-buffer ibuf  GL15/GL_ELEMENT_ARRAY_BUFFER)
-        ]
-        (Mesh. vbo tbo nbo ibo tex vao)))
 
 (defn render-mesh [mesh]
   (GL13/glActiveTexture GL13/GL_TEXTURE0)
@@ -191,6 +126,14 @@
         ]
         (AnimMesh. vbo tbo nbo bbo ibo qbuf pbuf dvbuf bbuf tex vao)
         ))
+
+(defn bounding-box-reduce [[lower upper] v]
+  [(if (nil? lower) v (lmin lower v)) 
+   (if (nil? upper) v (lmax upper v))])
+
+(defn mesh-bounding-box [^Mesh mesh]
+  (reduce bounding-box-reduce [nil nil] (partition 3 (to-list (:buf (:vbo mesh)))))
+)
 
 (defn new-triangle-anim-node-mesh [tex]
   {:elements   (to-sbuf [0 1 2])

@@ -37,8 +37,6 @@
 (defn not-zero [x]
   (not (= x 0)))
 
-(defn not-nil? [x] (not (nil? x)))
-
 (defn short-buf [buf]
   (let [nbuf (.duplicate buf)
         _    (.order nbuf ByteOrder/LITTLE_ENDIAN)
