@@ -22,9 +22,9 @@
   ([^Vector3f u ^Vector3f v] (.add u (.negate v))))
 
 (defn vplus 
-  ([^Vector3f u ^Vector3f v] (.add u v))
-  ([^Vector3f u ^Vector3f v ^Vector3f w] (.add (.add u v) w))
-  ([^Vector3f u ^Vector3f v ^Vector3f w ^Vector3f x] 
+  (^Vector3f [^Vector3f u ^Vector3f v] (.add u v))
+  (^Vector3f [^Vector3f u ^Vector3f v ^Vector3f w] (.add (.add u v) w))
+  (^Vector3f [^Vector3f u ^Vector3f v ^Vector3f w ^Vector3f x] 
      (-> u (.add v) (.add w) (.add x))))
 
 (defn vcross [^Vector3f u ^Vector3f v] (.cross u v))
@@ -32,6 +32,8 @@
 (defn svtimes [^Float s ^Vector3f u] (.mult u s))
 
 (defn qvtimes [^Quaternion q ^Vector3f u] (.mult q u))
+
+(defn vdot [^Vector3f u ^Vector3f v] (.dot u v))
 
 (defn q-to-list [^Quaternion q] [(.getX q) (.getY q) (.getZ q) (.getW q)])
 
@@ -73,13 +75,18 @@
 (defn lmax [u v]
   (if (empty? u) 
      ()
-     (cons (max (first u) (first v)) (lmin (rest u) (rest v)))))
+     (cons (max (first u) (first v)) (lmax (rest u) (rest v)))))
   
 (defn lstimes [s u]
   (map #(* s %) u))
+
+(defn lv-to-list [vs]
+  (apply concat (map (fn [v] [(vx v) (vy v) (vz v)]) vs)))
   
 
-(comment 
+(comment
+  (lv-to-list [(vector3f 1.0 2.0 3.0)])
+  
 	(let [a (q-to-list (from-angles 0.4 0   0))
 	      b (q-to-list (from-angles 0   0   0))
 	      c (ldot a b)

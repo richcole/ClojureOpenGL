@@ -80,25 +80,46 @@
    :tex         tex
  })
 
-(defn new-square-node-mesh [tex]
-  {:elements    (to-ibuf [0 1 2 0 3 2])
-   :vertices    (to-fbuf [-1.0  1.0  -10.0 
-                           1.0  1.0  -10.0 
-                           1.0 -1.0  -10.0
-                          -1.0 -1.0  -10.0])
-   :tex-coords  (to-fbuf [0 1 
-                          1 1 
-                          1 0
-                          0 0])
-   :normals     (to-fbuf [0 0 -1.0   0 0 -1.0   0 0 -1.0   0 0 -1.0])
-   :tex         tex
- })
+(defn new-square-node-mesh 
+  ([tex]
+	  {:elements    (to-ibuf [0 1 2 0 3 2])
+	   :vertices    (to-fbuf [-1.0  1.0  -10.0 
+	                           1.0  1.0  -10.0 
+	                           1.0 -1.0  -10.0
+	                          -1.0 -1.0  -10.0])
+	   :tex-coords  (to-fbuf [0 1 
+	                          1 1 
+	                          1 0
+	                          0 0])
+	   :normals     (to-fbuf [0 0 -1.0   0 0 -1.0   0 0 -1.0   0 0 -1.0])
+	   :tex         tex
+	 })
+  ([tex pos dx dy]
+    (let [mdx (vminus dx)
+          mdy (vminus dy)]
+    {:elements    (to-ibuf [0 1 2 0 3 2])
+	   :vertices    (to-fbuf (lv-to-list 
+                            [(vplus pos mdx dy)
+                             (vplus pos dx  dy)
+                             (vplus pos dx  mdy)
+                             (vplus pos mdx mdy)]))
+	   :tex-coords  (to-fbuf [0 1 
+	                          1 1 
+	                          1 0
+	                          0 0])
+	   :normals     (to-fbuf (lv-to-list (repeat 4 (vcross dx dy))))
+	   :tex         tex
+	 }))
+)
 
 (defn new-triangle-mesh [tex]
   (new-mesh (new-triangle-node-mesh tex)))
 
-(defn new-square-mesh [tex]
-  (new-mesh (new-square-node-mesh tex)))
+(defn new-square-mesh 
+  ([tex] 
+    (new-mesh (new-square-node-mesh tex)))
+  ([tex pos dx dy]
+    (new-mesh (new-square-node-mesh tex pos dx dy))))
 
 (defn render-mesh [mesh]
   (GL13/glActiveTexture GL13/GL_TEXTURE0)
@@ -165,16 +186,19 @@
    (if (nil? upper) v (lmax upper v))])
 
 (defn mesh-bounding-box ^BoundingBox [^Mesh mesh]
-  (let [[upper lower] (reduce bounding-box-reduce [nil nil] (partition 3 (to-list (:buf (:vbo mesh)))))] 
-	  (BoundingBox. upper lower)))
+  (let [[lower upper] (reduce bounding-box-reduce [nil nil] (partition 3 (to-list (:buf (:vbo mesh)))))] 
+	  (BoundingBox. (apply vector3f lower) (apply vector3f upper))))
 
 (defn bounding-box-grow ^BoundingBox [^BoundingBox b scale]
   (let [dx (svtimes scale (vplus U0 U1 U2))]
     (BoundingBox. (vminus (:lower b) dx) (vplus (:upper b) dx))))
 
-
 (defn bounding-box-center ^Vector3f [^BoundingBox b]
   (svtimes 0.5 (vplus (:lower b) (:upper b))))
+
+(defn bounding-box-du ^Vector3f [^BoundingBox b]
+  (svtimes 0.5 (vminus (:upper b) (:lower b))))
+
 
 (defn new-triangle-anim-node-mesh [tex]
   {:elements   (to-ibuf [0 1 2])

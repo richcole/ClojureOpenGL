@@ -20,7 +20,8 @@
     deforma.billboard
     deforma.util
     deforma.state
-    deforma.input)
+    deforma.input
+    deforma.buffers)
   (:gen-class))
 
 
@@ -88,21 +89,35 @@
 (when nil  
 
   (-main)
-  (gl-do (println (mesh-bounding-box @tm)))  
-  (partition 3 (deforma.buffers/to-list (:buf (:vbo @tm))))
-  (tick)
   (reset-state)
    
    (def fb (ref nil))
-   (gl-do (dosync (ref-set fb (new-frame-buffer 256 256))))
-   (let [render (fn []
+   (gl-do (dosync (ref-set fb (new-frame-buffer 1024 1024))))
+   (let [mesh @tree-mesh
+         render (fn []
                   (use-program @simple-program)
-                  (when @tree-mesh (render-mesh @tree-mesh)))]
-     (gl-do (render-framebuffer @fb (:pos @game-state) (:fwd @game-state) (:up @game-state) render))
+                  (when mesh (render-mesh mesh)))
+         bb   (mesh-bounding-box mesh)
+         c    (bounding-box-center bb)
+         du   (bounding-box-du bb)
+         fwd  U2
+         up   U1
+         left  (vcross up fwd)
+         dfwd  (Math/abs (vdot fwd du))
+         dleft (Math/abs (vdot left du))
+         dup   (Math/abs (vdot up   du))
+         dfwd  (+ dfwd (max dleft dup))
+         pos   (vplus c (svtimes (- dfwd) fwd))
+         ]
+     (println "bb" bb "pos" pos "fwd" fwd "up" up "dleft" dleft "dup" dup "dfwd" dfwd "c" c)
+     (gl-do (render-framebuffer @fb pos fwd up render))
    )
-   (gl-do (dosync (ref-set tm (new-square-mesh (:tb @fb)))))
+   1
+   @game-state
+   (to-list (:buf (:vbo @tm)))
+   (gl-do (dosync (ref-set tm (new-square-mesh (:tb @fb) (svtimes -10 U2) (svtimes -10 U0) (svtimes 10 U1)))))
    (gl-do (dosync (ref-set tm (new-triangle-mesh @stone-texture))))
-   
+  (java.lang.System/gc)   
    )
 
 (comment
@@ -164,7 +179,7 @@
   (gl-do 
    (dosync 
     (ref-set cubes 
-             (reduce add-cube @cubes (random-blocks 100)))
+             (reduce add-cube @cubes (random-blocks 5)))
     (add-cube @cubes (vector3f 0 1 1))
     (ref-set tree-mesh (new-mesh (cube-mesh @cubes)))))
 
@@ -178,7 +193,7 @@
 
   (gl-do 
    (dosync 
-    (ref-set tree-mesh (new-mesh (cube-mesh (terrain-map 42 42))))))
+    (ref-set tree-mesh (new-mesh (cube-mesh (terrain-map 10 10))))))
 
   (java.lang.System/gc)
   
@@ -228,7 +243,6 @@
   (gl-do
 	  (GL11/glMatrixMode GL11/GL_PROJECTION)
 	  (GL11/glLoadIdentity)
-	  ; (GLU/gluPerspective view-perp-angle view-aspect view-z-near view-z-far)
 	  (GL11/glFrustum -1 1 -1 1 1 10000) 
   )
 )
