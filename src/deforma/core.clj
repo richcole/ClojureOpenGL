@@ -44,8 +44,8 @@
     (look-at pos (vplus pos fwd) up))
 
   (when @simple-program (use-program @simple-program)
-    (when @tm (render-mesh @tm))
     (when @tree-mesh (render-mesh @tree-mesh))
+    (when @tm (render-mesh @tm))
   )
 
   (when @anim-mesh 
@@ -85,20 +85,28 @@
 )
 
 
-(comment  
+(when nil  
 
-   (-main)
-   (gl-do (println (mesh-bounding-box @tm)))  
+  (-main)
+  (gl-do (println (mesh-bounding-box @tm)))  
   (partition 3 (deforma.buffers/to-list (:buf (:vbo @tm))))
   (tick)
-   (Mouse/isCreated) 
-   (reset-state)
+  (reset-state)
    
    (def fb (ref nil))
    (gl-do (dosync (ref-set fb (new-frame-buffer 256 256))))
-   (gl-do (render-framebuffer @fb basic-render))
-   (gl-do (dosync (ref-set tm (new-triangle-mesh (:tb @fb)))))
+   (let [render (fn []
+                  (use-program @simple-program)
+                  (when @tree-mesh (render-mesh @tree-mesh)))]
+     (gl-do (render-framebuffer @fb (:pos @game-state) (:fwd @game-state) (:up @game-state) render))
+   )
+   (gl-do (dosync (ref-set tm (new-square-mesh (:tb @fb)))))
    (gl-do (dosync (ref-set tm (new-triangle-mesh @stone-texture))))
+   
+   )
+
+(comment
+  (Mouse/isCreated) 
    
    (def tm1 (ref nil))
    (def tm2 (ref nil))
@@ -170,7 +178,7 @@
 
   (gl-do 
    (dosync 
-    (ref-set tree-mesh (new-mesh (cube-mesh (terrain-map 20 20))))))
+    (ref-set tree-mesh (new-mesh (cube-mesh (terrain-map 42 42))))))
 
   (java.lang.System/gc)
   
@@ -217,7 +225,12 @@
   (gl-do
     (load-texture "stone_texture.jpg"))
 
-
+  (gl-do
+	  (GL11/glMatrixMode GL11/GL_PROJECTION)
+	  (GL11/glLoadIdentity)
+	  ; (GLU/gluPerspective view-perp-angle view-aspect view-z-near view-z-far)
+	  (GL11/glFrustum -1 1 -1 1 1 10000) 
+  )
 )
 
 

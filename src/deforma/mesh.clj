@@ -9,8 +9,11 @@
            deforma.textures.Texture
            deforma.buffers.Buffer
            deforma.BufferGID
+           com.jme3.math.Quaternion 
+           com.jme3.math.Vector3f
            )
-  (:gen-class))
+  (:gen-class)
+  )
 
 
 (defrecord Mesh [^Buffer vbo 
@@ -59,15 +62,43 @@
         (Mesh. vbo tbo nbo ibo tex vao)))
 
 (defn new-triangle-node-mesh [tex]
-  {:elements    (to-sbuf [0 1 2])
-   :vertices   (to-fbuf [-1.0 1.0 -10.0 1.0 1.0 -10.0 1.0 -1.0 -10.0])
+  {:elements    (to-ibuf [0 1 2])
+   :vertices    (to-fbuf [-1.0 1.0 -10.0 1.0 1.0 -10.0 1.0 -1.0 -10.0])
    :tex-coords  (to-fbuf [0 1 1 1 1 0])
    :normals     (to-fbuf [0 0 -1.0   0 0 -1.0   0 0 -1.0])
    :tex         tex
  })
 
+(defn new-triangle-node-mesh [tex]
+  {:elements    (to-ibuf [0 1 2])
+   :vertices    (to-fbuf [-1.0 1.0  -10.0 
+                          1.0  1.0  -10.0 
+                          1.0 -1.0  -10.0
+                          ])
+   :tex-coords  (to-fbuf [0 1 1 1 1 0])
+   :normals     (to-fbuf [0 0 -1.0   0 0 -1.0   0 0 -1.0])
+   :tex         tex
+ })
+
+(defn new-square-node-mesh [tex]
+  {:elements    (to-ibuf [0 1 2 0 3 2])
+   :vertices    (to-fbuf [-1.0  1.0  -10.0 
+                           1.0  1.0  -10.0 
+                           1.0 -1.0  -10.0
+                          -1.0 -1.0  -10.0])
+   :tex-coords  (to-fbuf [0 1 
+                          1 1 
+                          1 0
+                          0 0])
+   :normals     (to-fbuf [0 0 -1.0   0 0 -1.0   0 0 -1.0   0 0 -1.0])
+   :tex         tex
+ })
+
 (defn new-triangle-mesh [tex]
   (new-mesh (new-triangle-node-mesh tex)))
+
+(defn new-square-mesh [tex]
+  (new-mesh (new-square-node-mesh tex)))
 
 (defn render-mesh [mesh]
   (GL13/glActiveTexture GL13/GL_TEXTURE0)
@@ -79,7 +110,7 @@
   (GL20/glEnableVertexAttribArray 2)
  
   (GL15/glBindBuffer GL15/GL_ELEMENT_ARRAY_BUFFER (gid (:ibo mesh)))
-  (GL11/glDrawElements GL11/GL_TRIANGLES (:size (:ibo mesh)) GL11/GL_UNSIGNED_SHORT 0)
+  (GL11/glDrawElements GL11/GL_TRIANGLES (:size (:ibo mesh)) GL11/GL_UNSIGNED_INT 0)
     
   (GL15/glBindBuffer GL15/GL_ELEMENT_ARRAY_BUFFER 0)
   (GL20/glDisableVertexAttribArray 0)
@@ -127,16 +158,26 @@
         (AnimMesh. vbo tbo nbo bbo ibo qbuf pbuf dvbuf bbuf tex vao)
         ))
 
+(defrecord BoundingBox [lower upper])
+
 (defn bounding-box-reduce [[lower upper] v]
   [(if (nil? lower) v (lmin lower v)) 
    (if (nil? upper) v (lmax upper v))])
 
-(defn mesh-bounding-box [^Mesh mesh]
-  (reduce bounding-box-reduce [nil nil] (partition 3 (to-list (:buf (:vbo mesh)))))
-)
+(defn mesh-bounding-box ^BoundingBox [^Mesh mesh]
+  (let [[upper lower] (reduce bounding-box-reduce [nil nil] (partition 3 (to-list (:buf (:vbo mesh)))))] 
+	  (BoundingBox. upper lower)))
+
+(defn bounding-box-grow ^BoundingBox [^BoundingBox b scale]
+  (let [dx (svtimes scale (vplus U0 U1 U2))]
+    (BoundingBox. (vminus (:lower b) dx) (vplus (:upper b) dx))))
+
+
+(defn bounding-box-center ^Vector3f [^BoundingBox b]
+  (svtimes 0.5 (vplus (:lower b) (:upper b))))
 
 (defn new-triangle-anim-node-mesh [tex]
-  {:elements   (to-sbuf [0 1 2])
+  {:elements   (to-ibuf [0 1 2])
    :vertices   (to-fbuf [0.0 0.0 0.0 
                          1.0 0.0 0.0 
                          1.0 1.0 0.0])
@@ -195,7 +236,7 @@
       (GL20/glEnableVertexAttribArray 3)
 
       (GL15/glBindBuffer GL15/GL_ELEMENT_ARRAY_BUFFER (gid (:ibo mesh)))
-      (GL11/glDrawElements GL11/GL_TRIANGLES (:size (:ibo mesh)) GL11/GL_UNSIGNED_SHORT 0)
+      (GL11/glDrawElements GL11/GL_TRIANGLES (:size (:ibo mesh)) GL11/GL_UNSIGNED_INT 0)
       
       (GL15/glBindBuffer GL15/GL_ELEMENT_ARRAY_BUFFER 0)
       (GL20/glDisableVertexAttribArray 0)

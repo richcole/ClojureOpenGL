@@ -1,10 +1,10 @@
 (ns deforma.billboard
+  (:use deforma.gid deforma.gl deforma.vector deforma.textures)
   (:import [org.lwjgl.opengl GL11 GL12 GL14 GL20 GL21 GL30 GL31]
            deforma.FrameBufferGID deforma.RenderBufferGID deforma.TextureGID
            java.nio.ByteBuffer
            deforma.textures.Texture
            )
-  (:use deforma.gid)
   (:gen-class))
 
 (defrecord Framebuffer [width height fb rb tb])
@@ -32,9 +32,16 @@
       result
     )))
 
-(defn render-framebuffer [^Framebuffer fb render-fn]
+(defn render-framebuffer [^Framebuffer fb pos fwd up render-fn]
   (GL30/glBindFramebuffer GL30/GL_FRAMEBUFFER (.getGid (:fb fb)))
   (GL11/glViewport 0 0 (:width fb) (:height fb))
+  (GL11/glMatrixMode GL11/GL_PROJECTION)
+  (GL11/glLoadIdentity)
+  (GL11/glFrustum -1 1 -1 1 1 10000) 
+  (GL11/glMatrixMode GL11/GL_MODELVIEW)
+  (GL11/glClear (bit-or GL11/GL_COLOR_BUFFER_BIT GL11/GL_DEPTH_BUFFER_BIT))
+  (GL11/glLoadIdentity)
+  (look-at pos (vplus pos fwd) up)
   (render-fn)
   (GL30/glBindFramebuffer GL30/GL_FRAMEBUFFER 0)
 )

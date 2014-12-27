@@ -26,11 +26,6 @@
 (def display-height 800)
 (def display-mode (new DisplayMode display-width display-height))
 
-(def view-perp-angle 45.0)
-(def view-aspect 1.0)
-(def view-z-near 1)
-(def view-z-far  100000)
-
 (defn create-color [r g b a]
   (let [buf (BufferUtils/createFloatBuffer 4)]
     (dorun (map (fn [x] (.put buf (float x))) [r g b a]))
@@ -87,7 +82,7 @@
   (GL11/glDisable GL11/GL_CULL_FACE)
   (GL11/glMatrixMode GL11/GL_PROJECTION)
   (GL11/glLoadIdentity)
-  (GLU/gluPerspective view-perp-angle view-aspect view-z-near view-z-far)
+  (GL11/glFrustum -1 1 -1 1 1 10000) 
   (GL11/glMatrixMode GL11/GL_MODELVIEW)
   (GL11/glLoadIdentity)
   )
@@ -134,7 +129,7 @@
               [["anim-vert.glsl" GL20/GL_VERTEX_SHADER]
                ["anim-frag.glsl" GL20/GL_FRAGMENT_SHADER]]))
     )
-   (let [prog-id (:id @anim-program)
+   (let [prog-id (gid @anim-program)
          ql (GL31/glGetUniformBlockIndex prog-id "Q")
          pl (GL31/glGetUniformBlockIndex prog-id "P")
          vl (GL31/glGetUniformBlockIndex prog-id "DV")

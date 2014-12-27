@@ -69,7 +69,7 @@
         num-vertices (count (:vertices faces))
         vbuf  (BufferUtils/createFloatBuffer (* 3 num-vertices))
         nbuf  (BufferUtils/createFloatBuffer (* 3 num-vertices))
-        ebuf  (BufferUtils/createShortBuffer num-vertices)
+        ebuf  (BufferUtils/createIntBuffer num-vertices)
         tbuf  (BufferUtils/createFloatBuffer (* 2 num-vertices))
         ]
     (dorun (for [v (:vertices faces)]
@@ -79,7 +79,7 @@
                (.put vbuf (float (vz v))))))
     (dorun (for [i (range 0 num-vertices)]
              (do
-               (.put ebuf (short i)))))
+               (.put ebuf (int i)))))
     (dorun (for [v (:tex-coords faces)]
              (do
                (.put tbuf (float (vx v)))
