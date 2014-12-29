@@ -21,7 +21,8 @@
     deforma.util
     deforma.state
     deforma.input
-    deforma.buffers)
+    deforma.buffers
+    deforma.nwn)
   (:gen-class))
 
 
@@ -90,7 +91,16 @@
 
   (-main)
   (reset-state)
-   
+  
+  (def m2 (bufferize-node (flatten-nodes (load-mesh-node "pmg0_shinr009") 1)))
+
+  (gl-do (dosync (ref-set tm (new-mesh (assoc m2 :tex @stone-texture)))))
+  (gl-do (dosync (ref-set tm (new-triangle-mesh @stone-texture))))
+ 
+  (gl-do (println (mesh-bounding-box (new-mesh (assoc m2 :tex @stone-texture)))))
+  
+  (take 10 (:ibo @tm)) 
+   (take 10 (to-list (:buf (:ibo @tm))))
    (def fb (ref nil))
    (gl-do (dosync (ref-set fb (new-frame-buffer 1024 1024))))
    (let [mesh @tree-mesh
@@ -117,17 +127,22 @@
    (to-list (:buf (:vbo @tm)))
    (gl-do (dosync (ref-set tm (new-square-mesh (:tb @fb) (svtimes -10 U2) (svtimes -10 U0) (svtimes 10 U1)))))
    (gl-do (dosync (ref-set tm (new-triangle-mesh @stone-texture))))
-  (java.lang.System/gc)   
-   )
+   (java.lang.System/gc) 
+   
+)
 
 (comment
   (Mouse/isCreated) 
    
    (def tm1 (ref nil))
-   (def tm2 (ref nil))
    (gl-do (dosync (ref-set tm1 (new-triangle-anim-node-mesh (:tb @fb)))))
    (gl-do (dosync (ref-set tm2 (new-mesh @tm1))))
 
+   (def tm2 (ref nil))
+   (gl-do (dosync (ref-set tm (new-mesh (box-mesh @stone-texture ZERO U0 U1 U2)))))
+   
+
+   
    (gl-do (view-init))
 
   (def tree-file (mmap-resource "dragon.3ds")) ; trees9.3ds

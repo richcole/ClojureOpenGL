@@ -1,9 +1,9 @@
 (ns deforma.vector
-  (:import com.jme3.math.Quaternion com.jme3.math.Vector3f)
+  (:import game.math.Quaternion game.math.Vector)
   (:gen-class))
 
 (defn vector3f [x y z]
-  (Vector3f. x y z))
+  (Vector. x y z))
 
 (defn quaternion []
   (Quaternion.))
@@ -12,45 +12,45 @@
   (let [q (quaternion)]
     (.fromAngles q x y z)))
 
-(def ZERO (Vector3f/ZERO))
-(def U0 (Vector3f/UNIT_X))
-(def U1 (Vector3f/UNIT_Y))
-(def U2 (Vector3f/UNIT_Z))
+(def ZERO (Vector/Z))
+(def U0 (Vector/U1))
+(def U1 (Vector/U2))
+(def U2 (Vector/U3))
 
 (defn vminus 
-  ([^Vector3f v]   (.negate v))
-  ([^Vector3f u ^Vector3f v] (.add u (.negate v))))
+  ([^Vector v]   (.minus v))
+  ([^Vector u ^Vector v] (.plus u (.minus v))))
 
 (defn vplus 
-  (^Vector3f [^Vector3f u ^Vector3f v] (.add u v))
-  (^Vector3f [^Vector3f u ^Vector3f v ^Vector3f w] (.add (.add u v) w))
-  (^Vector3f [^Vector3f u ^Vector3f v ^Vector3f w ^Vector3f x] 
-     (-> u (.add v) (.add w) (.add x))))
+  (^Vector [^Vector u ^Vector v] (.plus u v))
+  (^Vector [^Vector u ^Vector v ^Vector w] (.plus (.plus u v) w))
+  (^Vector [^Vector u ^Vector v ^Vector w ^Vector x] 
+     (-> u (.plus v) (.plus w) (.plus x))))
 
-(defn vcross [^Vector3f u ^Vector3f v] (.cross u v))
+(defn vcross [^Vector u ^Vector v] (.cross u v))
 
-(defn svtimes [^Float s ^Vector3f u] (.mult u s))
+(defn svtimes [^Float s ^Vector u] (.times u s))
 
-(defn qvtimes [^Quaternion q ^Vector3f u] (.mult q u))
+(defn qvtimes [^Quaternion q ^Vector u] (.times q u))
 
-(defn vdot [^Vector3f u ^Vector3f v] (.dot u v))
+(defn vdot [^Vector u ^Vector v] (.dot u v))
 
-(defn q-to-list [^Quaternion q] [(.getX q) (.getY q) (.getZ q) (.getW q)])
+(defn q-to-list [^Quaternion q] (doall (map #(.get q %) (range 4))))
 
 (defn vx [u] (.x u)) 
 (defn vy [u] (.y u)) 
 (defn vz [u] (.z u))
 
-(defn vmin [^Vector3f a ^Vector3f b]
+(defn vmin [^Vector a ^Vector b]
   (if (nil? a) b
-	  (Vector3f. 
+	  (Vector. 
 	    (min (vx a) (vx b))
 	    (min (vy a) (vy b))
 	    (min (vz a) (vz b)))))
 
-(defn vmax [^Vector3f a ^Vector3f b]
+(defn vmax [^Vector a ^Vector b]
   (if (nil? a) b
-	  (Vector3f. 
+	  (Vector. 
 	    (max (vx a) (vx b))
 	    (max (vy a) (vy b))
 	    (max (vz a) (vz b)))))

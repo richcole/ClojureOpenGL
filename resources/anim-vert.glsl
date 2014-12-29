@@ -71,15 +71,15 @@ layout(location = 2) in vec3 normal;
 layout(location = 3) in float bone;
 
 layout(std140) uniform Q {
-  vec4   q[4];        // indexed by bone and frame
+  vec4   q[100];        // indexed by bone and frame
 };
 
 layout(std140) uniform P {
-  int    parent[2];   // indexed by bone
+  int    parent[100];   // indexed by bone
 };
 
 layout(std140) uniform DV {
-  vec3    dv[2];      // indexed by bone, displacement from parent bone
+  vec3    dv[100];      // indexed by bone, displacement from parent bone
 };
 
 layout(std140) uniform B {

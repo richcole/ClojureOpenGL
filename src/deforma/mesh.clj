@@ -199,6 +199,82 @@
 (defn bounding-box-du ^Vector3f [^BoundingBox b]
   (svtimes 0.5 (vminus (:upper b) (:lower b))))
 
+(defn choose 
+  ([col k]
+    (choose (reverse col) k '() '()))
+  ([col k curr soln]
+  (if (= k 0)
+    (cons curr soln)
+    (if (> k (count col))
+      soln
+      (let [soln (choose (rest col) k curr soln)
+            curr (cons (first col) curr)]
+        (choose (rest col) (- k 1) curr soln))))))
+
+(defn product [& cols]
+  (if (empty? cols) 
+    '(())
+    (for [x (first cols)
+          y (apply product (rest cols))]
+      (cons x y))))
+
+(defn apposition [xs ys]
+  (if (= 1 (count ys)) 
+    (for [x xs y ys] [[x y]])
+    (apply concat (for [x xs]
+                    (map #(cons [x (first ys)] %) (apposition xs (rest ys)))))))
+
+(defn at-indexes [col indexes]
+  (map #(nth col %) indexes))
+
+(defn selections 
+  ([xs] (selections xs []))
+  ([xs ys]
+	  (if (empty? xs)
+	    '()
+		  (cons 
+		    [(first xs) (concat (reverse ys) (rest xs))] 
+		    (selections (rest xs) (cons (first xs) ys))))))
+
+(defn permutations [xs k]
+  (if (= k 0) [[]]
+    (for [[y ys] (selections xs)
+          zs (permutations ys (- k 1))]
+      (cons y zs))))
+  
+(permutations (range 50) 2)  
+
+(selections [1 2 3])
+
+(count (apposition [-1 1] [:x :y :z]))
+
+(defn to-verticies [[[x1 x2] ys]]
+  (let [p  (reduce (fn [p [s v]] (vplus p (svtimes s v))) ZERO ys)
+        dx (fn [x] (let [[s v] (nth ys x)]
+             (vplus p (svtimes (* -2 s) v))))]
+    [(dx x1) p (dx x2)]))
+
+(defn to-normals [[x y z]]
+  (let [n (vcross (vminus x y) (vminus z y))]
+    [n n n]))
+
+(defn sign-to-texc [s]
+  (/ (+ s 1) 2))
+  
+(defn to-tex-coords []
+  [0 0 0 1 1 1])
+
+(defn box-mesh [tex pos dx dy dz]
+  (let [corners   (apposition [-1 1] [dx dy dz])
+        tries     (product (choose (range 3) 2) corners)
+        tvectors  (map to-verticies tries)
+        vertices  (to-fbuf (lv-to-list (flatten tvectors)))
+        elements  (to-ibuf (range (* 3 (count tvectors))))
+        normals   (to-fbuf (lv-to-list (flatten (map to-normals tvectors))))
+        tex-coords (to-fbuf (flatten (repeat (count tries) (to-tex-coords))))
+        ]
+        {:vertices vertices :normals normals :elements elements :tex-coords tex-coords :tex tex}))
+         
 
 (defn new-triangle-anim-node-mesh [tex]
   {:elements   (to-ibuf [0 1 2])
