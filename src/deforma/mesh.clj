@@ -36,6 +36,7 @@
 
 (deftype AnimPoint [tick ^Transform tr])
 
+; fixme: vao should be a gid object
 (deftype CompiledMesh [^Buffer vbo 
                        ^Buffer tbo 
                        ^Buffer nbo 
@@ -178,18 +179,7 @@
 
 (extend-type AnimMesh Compilable 
   (compile-mesh [self]
-    (let [e   (.elements   self)
-          v   (.vertices   self)
-          t   (.tex-coords self)
-          n   (.normals    self)
-          bn  (.bones      self)
-
-          q   (.q    self)
-          p   (.p    self)
-          dv  (.dv   self)
-          b   (.b    self)
-
-          tex (.tex self)
+    (let [tex (.tex self)
 
           vao  (GL30/glGenVertexArrays)
           _    (GL30/glBindVertexArray vao)
@@ -206,12 +196,12 @@
           bbo  (-> self .bones to-fbuf (load-buffer GL15/GL_ARRAY_BUFFER))
           _    (GL20/glVertexAttribPointer 3 1 GL11/GL_FLOAT false 0 0)
 
-          ibo  (-> self .elements to-fbuf (load-buffer GL15/GL_ELEMENT_ARRAY_BUFFER))
+          ibo  (-> self .elements to-ibuf (load-buffer GL15/GL_ELEMENT_ARRAY_BUFFER))
 
-          qbuf  (-> self .q to-fbuf  (load-buffer q GL31/GL_UNIFORM_BUFFER))
-          pbuf  (-> self .p to-fbuf (load-buffer p GL31/GL_UNIFORM_BUFFER))
-          dvbuf (-> self .dv to-fbuf (load-buffer dv GL31/GL_UNIFORM_BUFFER))
-          bbuf  (-> self .bbuf to-fbuf (load-buffer b GL31/GL_UNIFORM_BUFFER))
+          qbuf  (-> self .q to-fbuf  (load-buffer GL31/GL_UNIFORM_BUFFER))
+          pbuf  (-> self .p to-ibuf (load-buffer GL31/GL_UNIFORM_BUFFER))
+          dvbuf (-> self .dv to-fbuf (load-buffer GL31/GL_UNIFORM_BUFFER))
+          bbuf  (-> self .b to-ibuf (load-buffer GL31/GL_UNIFORM_BUFFER))
           ]
           (CompiledAnimMesh. vbo tbo nbo bbo ibo qbuf pbuf dvbuf bbuf tex vao)
           )))

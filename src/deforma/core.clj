@@ -67,8 +67,10 @@
   (gl-init)
   (gl-compile-shaders)
   (gl-load-textures)
-  (gl-do (dosync (ref-set tm (compile-mesh (new-triangle-mesh @stone-texture)))))
-  
+  (gl-do (dosync (ref-set tm 
+                   (compile-mesh (new-triangle-mesh @stone-texture)))))
+  (gl-do (dosync (ref-set anim-mesh 
+                   (compile-mesh (new-triangle-anim-mesh @stone-texture)))))
 
   (future (while true (gl-do (render-scene))))
   (future (catch-and-print-ex (while true (tick))))
