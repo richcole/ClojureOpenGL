@@ -66,7 +66,7 @@ public class ExtractModels {
         return;
       }
       MdlReader mdlReader = context.getKeyReader().getMdlReader(resName);
-      NwnMesh mesh = new NwnMesh(context, mdlReader.readModel(), 0);
+      NwnMesh mesh = new NwnMesh(context, mdlReader.readModel());
       AnimMesh animMesh = mesh.getAnimMesh();
       logger.info("Writing " + resFile.getCanonicalPath());
       serializer.serialize(animMesh, resFile);

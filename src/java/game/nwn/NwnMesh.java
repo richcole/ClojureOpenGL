@@ -26,7 +26,7 @@ public class NwnMesh {
     void postVisit(MdlNodeHeader node, MdlNodeHeader fromNode, double alpha);
   }
 
-  public NwnMesh(Context context, MdlModel mdl, int x) {
+  public NwnMesh(Context context, MdlModel mdl) {
     this.context = context;
     this.mdl = mdl;
   }

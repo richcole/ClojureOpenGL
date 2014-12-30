@@ -5,14 +5,13 @@
            java.nio.FloatBuffer
            java.nio.IntBuffer
            java.nio.ShortBuffer
-           com.jme3.math.Quaternion 
-           com.jme3.math.Vector3f
            java.lang.System
            deforma.BufferGID)
   (:use deforma.util deforma.gid)
   (:gen-class))
 
-(defrecord Buffer [^BufferGID id ^Integer size buf])
+(deftype Buffer [^BufferGID id ^Integer size buf]
+  Gidable (gid [self] (.getGid (.id self))))
 
 (defn to-list [buf]
   (.rewind buf)
@@ -44,16 +43,19 @@
   buf)
 
 (defn to-sbuf [xs]
-  (let [buf (BufferUtils/createShortBuffer (count xs))]
-    (write-sbuf buf xs)))
+  (if (instance? ShortBuffer xs) xs
+	  (let [buf (BufferUtils/createShortBuffer (count xs))]
+	    (write-sbuf buf xs))))
 
 (defn to-ibuf [xs]
-  (let [buf (BufferUtils/createIntBuffer (count xs))]
-    (write-ibuf buf xs)))
+  (if (instance? IntBuffer xs) xs
+	  (let [buf (BufferUtils/createIntBuffer (count xs))]
+	    (write-ibuf buf xs))))
 
 (defn to-fbuf [xs]
-  (let [buf (BufferUtils/createFloatBuffer (count xs))]
-    (write-fbuf buf xs)))
+  (if (instance? FloatBuffer xs) xs
+	  (let [buf (BufferUtils/createFloatBuffer (count xs))]
+	    (write-fbuf buf xs))))
 
 
 

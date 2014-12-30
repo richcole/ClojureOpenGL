@@ -5,7 +5,7 @@
                      material.Material
                      scene.Geometry
                      scene.shape.Box
-                     math.Vector3f
+                     math.Vector
                      math.ColorRGBA])
   (:gen-class))
 
@@ -21,7 +21,7 @@
 (def app (proxy [SimpleApplication] []
   (simpleInitApp []
     (org.lwjgl.input.Mouse/setGrabbed false)
-    (let [b (Box. Vector3f/ZERO 1 1 1)
+    (let [b (Box. Vector/ZERO 1 1 1)
           geom (Geometry. "Box" b)
           mat (Material. assetManager
                          "Common/MatDefs/Misc/Unshaded.j3md")]

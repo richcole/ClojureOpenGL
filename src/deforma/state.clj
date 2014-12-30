@@ -1,15 +1,16 @@
 (ns deforma.state
   (:use deforma.vector)
   (:import org.lwjgl.BufferUtils
-           [com.jme3.math Quaternion Vector3f])
+           game.math.Quaternion 
+           game.math.Vector)
   (:gen-class))
 
 (defrecord State 
-    [^Vector3f pos 
-     ^Vector3f left 
-     ^Vector3f fwd 
-     ^Vector3f up 
-     ^Vector3f vel 
+    [^Vector pos 
+     ^Vector left 
+     ^Vector fwd 
+     ^Vector up 
+     ^Vector vel 
      ^Double speed 
      ^Double mx 
      ^Double my

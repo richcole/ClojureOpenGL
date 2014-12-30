@@ -95,9 +95,13 @@
 
 (defn load-mesh-node [res-name]
   (let [model-reader (.getMdlReader key-reader res-name)
-        mesh (NwnMesh. context (.readModel model-reader) 0)
+        mesh (NwnMesh. context (.readModel model-reader))
         anim-mesh (.getAnimMesh mesh)]
     (convert-node (.getRoot anim-mesh))))
+
+(defn load-nwn-model [res-name]
+  (let [model-reader (.getMdlReader key-reader res-name)]
+        (.readModel model-reader)))
 
 (defn bufferize-node [mesh]
   (assoc mesh 

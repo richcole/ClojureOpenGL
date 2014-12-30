@@ -2,7 +2,7 @@
   (:import game.math.Quaternion game.math.Vector)
   (:gen-class))
 
-(defn vector3f [x y z]
+(defn new-vector [x y z]
   (Vector. x y z))
 
 (defn quaternion []
@@ -85,7 +85,7 @@
   
 
 (comment
-  (lv-to-list [(vector3f 1.0 2.0 3.0)])
+  (lv-to-list [(new-vector 1.0 2.0 3.0)])
   
 	(let [a (q-to-list (from-angles 0.4 0   0))
 	      b (q-to-list (from-angles 0   0   0))

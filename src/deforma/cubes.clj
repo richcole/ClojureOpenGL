@@ -1,5 +1,5 @@
 (ns deforma.cubes
-  (:use deforma.vector)
+  (:use deforma.vector deforma.face)
   (:import org.lwjgl.BufferUtils)
   (:gen-class))
 
@@ -8,29 +8,6 @@
 (defrecord Cubes [blocks bb])
 
 (def cubes (ref (Cubes. {} [100 100 100])))
-
-; 2---3/6
-; |  / |
-; | /  |
-; 1/4--5   
-(defn new-face [p d0 d1 d2]
-  {:vertices 
-   [(vplus p d0 (vminus d1) (vminus d2))
-    (vplus p d0 (vminus d1) d2)
-    (vplus p d0 d1 d2)
-    (vplus p d0 (vminus d1) (vminus d2))
-    (vplus p d0 d1 (vminus d2))
-    (vplus p d0 d1 d2)]
-   :tex-coords 
-   [(vector3f 0 0 0)
-    (vector3f 0 1 0)
-    (vector3f 1 1 0)
-    (vector3f 0 0 0)
-    (vector3f 1 0 0)
-    (vector3f 1 1 0)]
-   :normals
-   [d0 d0 d0 d0 d0 d0]
-   })
 
 (defn assoc-concat [m [k v]] 
   (assoc m k [(get m k []) v]))
@@ -133,21 +110,12 @@
   (let [solid-blocks (for [x (range 0 (nth bb 0))
                            z (range 0 (nth bb 1))
                            y (range 0 (get hm [x z]))]
-                         (vector3f x y z))
+                         (new-vector x y z))
         blocks (reduce (fn [m p] (assoc m p (Block.))) {} solid-blocks)]
     (Cubes. blocks bb)))
 
-(Math/floor (avg 1 2))
-
 (defn terrain-map [dx dy]
   (cubes-from-height-map (height-map {} 0 0 dx dy 2.0 2.0 2.0 2.0) [dx dy]))
-
-(count
-  (cubes-from-height-map (height-map {} 0 0 50 50 1.0 2.0 3.0 4.0) [50 50]))
-
-(has-block @cubes (vector3f 0 0 0))
-(has-block @cubes (vector3f 0 0 1))
-
 
 
 

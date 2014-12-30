@@ -2,7 +2,8 @@
   (:import [org.lwjgl.opengl Display DisplayMode GL11 GL12 GL13 GL20 GL30 GL31]
            [org.lwjgl.util.glu GLU]
            [org.lwjgl BufferUtils]
-           [com.jme3.math Quaternion Vector3f]
+           game.math.Quaternion 
+           game.math.Vector
            java.lang.System
            org.lwjgl.BufferUtils
            )
@@ -22,46 +23,33 @@
     deforma.state
     deforma.input
     deforma.buffers
-    deforma.nwn)
+    deforma.nwn
+    deforma.gid)
   (:gen-class))
 
-
+(defn render-objects [& rest]
+  (doseq [x rest]
+	  (if (and x @programs)
+	    (render x @programs))))
 
 (defn basic-render []
   (view-clear)
   (let [{:keys [pos fwd up]} @game-state]
     (look-at pos (vplus pos fwd) up))
-  (when @simple-program (use-program @simple-program)
-    (when @tm (render-mesh @tm))
-    (when @tree-mesh (render-mesh @tree-mesh))
-  )
-)  
+  (render-objects @tm @tree-mesh)
+)
 
-(defn render []
+(defn render-scene []
   (GL11/glViewport 0 0 display-width display-height)
   (update-input-state)
   (view-clear)
 
-  (let [{:keys [pos fwd up]} @game-state]
-    (look-at pos (vplus pos fwd) up))
+  (let [pos (.pos @game-state) 
+       fwd (.fwd @game-state) 
+       up (.up @game-state)]
+   (look-at pos (vplus pos fwd) up))
 
-  (when @simple-program (use-program @simple-program)
-    (when @tree-mesh (render-mesh @tree-mesh))
-    (when @tm (render-mesh @tm))
-  )
-
-  (when @anim-mesh 
-    (render-anim-mesh @anim-program @anim-mesh))
-
-  (when false
-    (when (and @simple-program @anim-mesh)
-      (use-program @simple-program)
-      (render-mesh @anim-mesh)))
-
-  (when false
-    (render-triangle)
-  )
-
+ (render-objects @tree-mesh @tm @anim-mesh) 
   (Display/update)
 )
 
@@ -79,13 +67,12 @@
   (gl-init)
   (gl-compile-shaders)
   (gl-load-textures)
-  (gl-do (dosync (ref-set tm (new-triangle-mesh @stone-texture))))
+  (gl-do (dosync (ref-set tm (compile-mesh (new-triangle-mesh @stone-texture)))))
   
 
-  (future (while true (gl-do (render))))
+  (future (while true (gl-do (render-scene))))
   (future (catch-and-print-ex (while true (tick))))
 )
-
 
 (when nil  
 
@@ -93,20 +80,27 @@
   (reset-state)
   
   (def m2 (bufferize-node (flatten-nodes (load-mesh-node "pmg0_shinr009") 1)))
+  (def m3 (load-nwn-model "pmg0_shinr009"))
 
+  (count (.getChildren (.getGeometry (.getGeometryHeader m3))))
+  
   (gl-do (dosync (ref-set tm (new-mesh (assoc m2 :tex @stone-texture)))))
   (gl-do (dosync (ref-set tm (new-triangle-mesh @stone-texture))))
  
   (gl-do (println (mesh-bounding-box (new-mesh (assoc m2 :tex @stone-texture)))))
+  
+  (vdot (.left @game-state) (.up @game-state))
+  
+  (vdot 
+    (qvtimes (.dirn @game-state) (.fwd @game-state))
+    (qvtimes (.dirn @game-state) (.up @game-state)))
   
   (take 10 (:ibo @tm)) 
    (take 10 (to-list (:buf (:ibo @tm))))
    (def fb (ref nil))
    (gl-do (dosync (ref-set fb (new-frame-buffer 1024 1024))))
    (let [mesh @tree-mesh
-         render (fn []
-                  (use-program @simple-program)
-                  (when mesh (render-mesh mesh)))
+         render #(render-objects mesh)
          bb   (mesh-bounding-box mesh)
          c    (bounding-box-center bb)
          du   (bounding-box-du bb)
@@ -120,7 +114,7 @@
          pos   (vplus c (svtimes (- dfwd) fwd))
          ]
      (println "bb" bb "pos" pos "fwd" fwd "up" up "dleft" dleft "dup" dup "dfwd" dfwd "c" c)
-     (gl-do (render-framebuffer @fb pos fwd up render))
+     (gl-do (render-framebuffer @fb pos fwd up render-scene))
    )
    1
    @game-state
@@ -190,12 +184,12 @@
 
   (defn random-blocks [n]
     (doall (for [x (range 0 n)]
-             (vector3f (rand-int 10) (rand-int 10) (rand-int 10)))))
+             (new-vector (rand-int 10) (rand-int 10) (rand-int 10)))))
   (gl-do 
    (dosync 
     (ref-set cubes 
              (reduce add-cube @cubes (random-blocks 5)))
-    (add-cube @cubes (vector3f 0 1 1))
+    (add-cube @cubes (new-vector 0 1 1))
     (ref-set tree-mesh (new-mesh (cube-mesh @cubes)))))
 
   (gl-do (dosync (ref-set tm (new-mesh (new-triangle-anim-node-mesh @stone-texture)))))
@@ -218,7 +212,7 @@
     (ref-set anim-mesh (new-triangle-anim-mesh @stone-texture))))
 
    (gl-do
-     (when @anim-mesh (render-anim-mesh @anim-program @anim-mesh)))
+     (when @anim-mesh (render @anim-program @anim-mesh)))
    
   (to-list (:bones (new-triangle-anim-node-mesh @stone-texture)))
 
@@ -233,7 +227,7 @@
   (count (to-list (:elements (node-mesh (first-node (match-name-fn "Cube") tree)))))
 
   (def tm (ref nil))
-  (gl-do (render-mesh @tm))
+  (gl-do (render @tm @programs))
 
   (gl-do
    (GL11/glEnable GL11/GL_CULL_FACE)

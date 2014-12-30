@@ -12,37 +12,43 @@
 
 (declare update-input-state)
 
+(deftype KeyboardEvent [key down?])
+(deftype MouseEvent [left-down? middle-down? right-down? dx dy])
+
 (defn get-keyboard-event []
   (when (Keyboard/next)
-    {:key (Keyboard/getEventKey) :down? (Keyboard/getEventKeyState)}))
+    (KeyboardEvent. 
+      (Keyboard/getEventKey) 
+      (Keyboard/getEventKeyState))))
 
 (defn get-mouse-event []
   (when (Mouse/next)
-    {:left-down?   (Mouse/isButtonDown 0) 
-     :middle-down? (Mouse/isButtonDown 1) 
-     :right-down?  (Mouse/isButtonDown 2) 
-     :dx (Mouse/getEventDX)
-     :dy (Mouse/getEventDY)}))
+    (MouseEvent.
+    (Mouse/isButtonDown 0) 
+    (Mouse/isButtonDown 1) 
+    (Mouse/isButtonDown 2) 
+    (Mouse/getEventDX)
+    (Mouse/getEventDY))))
 
-(defn process-keyboard-event [^State state event]
-  (let [key (:key event)]
+(defn process-keyboard-event [^State state ^KeyboardEvent event]
+  (let [key (.key event)]
     (cond 
      (= key Keyboard/KEY_A) 
-       (assoc state :move-left  (:down? event))
+       (assoc state :move-left  (.down? event))
      (= key Keyboard/KEY_D) 
-       (assoc state :move-right (:down? event))
+       (assoc state :move-right (.down? event))
      (= key Keyboard/KEY_W) 
-       (assoc state :move-fwd   (:down? event))
+       (assoc state :move-fwd   (.down? event))
      (= key Keyboard/KEY_S) 
-       (assoc state :move-back  (:down? event))
+       (assoc state :move-back  (.down? event))
      :else state)))
 
-(defn process-mouse-event [^State state event]
-  (if (:left-down? event)
+(defn process-mouse-event [^State state ^MouseEvent event]
+  (if (.left-down? event)
     (assoc state 
       :mouse-grabbed true
-      :mx (+ (:mx state) (:dx event))
-      :my (+ (:my state) (:dy event)))
+      :mx (+ (.mx state) (.dx event))
+      :my (+ (.my state) (.dy event)))
     (assoc state :mouse-grabbed false)))
 
 (defn update-state-with-keyboard-input [^State state]
@@ -57,16 +63,16 @@
 
 (defn update-vel-component [^State state [pred dirn]]
   (if (pred state) 
-    (assoc state :vel (vplus (:vel state) dirn))
+    (assoc state :vel (vplus (.vel state) dirn))
     state))
 
 (defn update-velocity [^State state]
   (reduce update-vel-component 
           (assoc state :vel ZERO)
-          [[:move-left  (:left state)]
-           [:move-right (vminus (:left state))]
-           [:move-fwd (:fwd state)]
-           [:move-back (vminus (:fwd state))]]))
+          [[:move-left  (.left state)]
+           [:move-right (vminus (.left state))]
+           [:move-fwd (.fwd state)]
+           [:move-back (vminus (.fwd state))]]))
 
 (defn update-position [^State state ^Double dt]
   (let [{:keys [pos fwd up vel speed]} state
@@ -77,8 +83,8 @@
   (/ x 500.0))
 
 (defn update-direction [^State state]
-  (let [sx (- (screen-scale (:mx state)))
-        sy (screen-scale (:my state))
+  (let [sx (- (screen-scale (.mx state)))
+        sy (screen-scale (.my state))
         dirn (from-angles sy sx 0)
         fwd  (qvtimes dirn (vminus U2))
         up   (qvtimes dirn U1)
@@ -93,7 +99,7 @@
       (update-position dt)))
 
 (defn update-mouse-grabbed [state]
-  (if (:mouse-grabbed state)
+  (if (.mouse-grabbed state)
     (when (not (Mouse/isGrabbed)) (Mouse/setGrabbed true))
     (when (Mouse/isGrabbed) (Mouse/setGrabbed false)))
   state)

@@ -1,13 +1,20 @@
 (ns deforma.billboard
-  (:use deforma.gid deforma.gl deforma.vector deforma.textures)
+  (:use deforma.gl deforma.vector deforma.textures deforma.gid)
   (:import [org.lwjgl.opengl GL11 GL12 GL14 GL20 GL21 GL30 GL31]
-           deforma.FrameBufferGID deforma.RenderBufferGID deforma.TextureGID
+           deforma.FrameBufferGID 
+           deforma.RenderBufferGID 
+           deforma.TextureGID
+           game.math.Vector
            java.nio.ByteBuffer
            deforma.textures.Texture
            )
   (:gen-class))
 
-(defrecord Framebuffer [width height fb rb tb tbd])
+(deftype Framebuffer 
+  [^Integer width ^Integer height ^FrameBufferGID fb ^RenderBufferGID rb 
+   ^Texture tb ^Texture tbd]
+  Gidable
+  (gid [self] (-> self .id .getGid)))
 
 (defn new-framebuffer-texture [width height]
   (let [t (TextureGID.)
@@ -38,9 +45,9 @@
       result
     )))
 
-(defn render-framebuffer [^Framebuffer fb pos fwd up render-fn]
-  (GL30/glBindFramebuffer GL30/GL_FRAMEBUFFER (.getGid (:fb fb)))
-  (GL11/glViewport 0 0 (:width fb) (:height fb))
+(defn render-framebuffer [^Framebuffer fb ^Vector pos ^Vector fwd ^Vector up render-fn]
+  (GL30/glBindFramebuffer GL30/GL_FRAMEBUFFER (gid fb))
+  (GL11/glViewport 0 0 (.width fb) (.height fb))
   (GL11/glMatrixMode GL11/GL_PROJECTION)
   (GL11/glLoadIdentity)
   (GL11/glFrustum -1 1 -1 1 1 10000) 

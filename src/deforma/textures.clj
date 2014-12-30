@@ -9,7 +9,8 @@
          deforma.gid)
   (:gen-class))
 
-(defrecord Texture [^TextureGID id ^Integer width ^Integer height])
+(deftype Texture [^TextureGID id ^Integer width ^Integer height]
+  Gidable (gid [self] (.getGid (.id self))))
 
 (defn new-texture [width height]
   (let [id (TextureGID. (GL11/glGenTextures))]

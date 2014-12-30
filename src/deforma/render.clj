@@ -9,7 +9,3 @@
 (defprotocol Renderable 
   (render [this])
 )
-  
-  
-  
-  

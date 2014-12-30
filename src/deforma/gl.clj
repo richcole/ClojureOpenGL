@@ -1,5 +1,6 @@
 (ns deforma.gl
-  (:use deforma.vector 
+  (:use 
+    deforma.vector 
     deforma.gid 
     deforma.shaders 
     deforma.state 
@@ -9,13 +10,11 @@
            [org.lwjgl.util.glu GLU]
            deforma.textures.Texture
            org.lwjgl.BufferUtils
-           com.jme3.math.Quaternion 
-           com.jme3.math.Vector3f           
+           game.math.Vector
     )
   (:gen-class))
 
-(defonce simple-program (ref nil))
-(defonce anim-program (ref nil))
+(defonce programs (ref nil))
 (defonce stone-texture (ref nil))
 (defonce tm (ref nil))
 (defonce tree-mesh (ref nil))
@@ -87,7 +86,7 @@
   (GL11/glLoadIdentity)
   )
 
-(defn look-at [^Vector3f eye ^Vector3f at ^Vector3f up]
+(defn look-at [^Vector eye ^Vector at ^Vector up]
   (GL11/glLoadIdentity)
   (GLU/gluLookAt 
    (vx eye) (vy eye) (vz eye) 
@@ -97,7 +96,7 @@
 (defn render-triangle [^Texture tex]
   (GL11/glEnable GL11/GL_TEXTURE_2D)
   (GL11/glBindTexture GL11/GL_TEXTURE_2D (gid tex))
-  (use-program @simple-program)
+  (use-program (.simple-program @programs))
   
   (GL11/glBegin GL11/GL_TRIANGLES)
   
@@ -117,31 +116,7 @@
    (dosync (ref-set stone-texture (load-texture "stone_texture.jpg")))))
 
 (defn gl-compile-shaders []
-  (gl-do 
-   (dosync 
-    (ref-set simple-program
-             (new-program-from-shader-resources 
-              [["simple-vert.glsl" GL20/GL_VERTEX_SHADER]
-               ["simple-frag.glsl" GL20/GL_FRAGMENT_SHADER]])))
-   (dosync 
-    (ref-set anim-program
-             (new-program-from-shader-resources 
-              [["anim-vert.glsl" GL20/GL_VERTEX_SHADER]
-               ["anim-frag.glsl" GL20/GL_FRAGMENT_SHADER]]))
-    )
-   (let [prog-id (gid @anim-program)
-         ql (GL31/glGetUniformBlockIndex prog-id "Q")
-         pl (GL31/glGetUniformBlockIndex prog-id "P")
-         vl (GL31/glGetUniformBlockIndex prog-id "DV")
-         bl (GL31/glGetUniformBlockIndex prog-id "B")
-         ]
-     (GL31/glUniformBlockBinding prog-id ql 0)
-     (GL31/glUniformBlockBinding prog-id pl 1)
-     (GL31/glUniformBlockBinding prog-id vl 2)
-     (GL31/glUniformBlockBinding prog-id bl 3)
-    )))
-  
-
+  (gl-do (dosync (ref-set programs (new-programs)))))
 
 (defn gl-init []
   (gl-do 
