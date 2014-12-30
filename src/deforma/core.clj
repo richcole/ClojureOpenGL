@@ -71,6 +71,10 @@
                    (compile-mesh (new-triangle-mesh @stone-texture)))))
   (gl-do (dosync (ref-set anim-mesh 
                    (compile-mesh (new-triangle-anim-mesh @stone-texture)))))
+  (gl-do (dosync (ref-set tree-mesh 
+                   (compile-mesh (new-square-mesh @stone-texture
+                                   ZERO (svtimes 1 U0) (svtimes 1 U1))))))
+  
 
   (future (while true (gl-do (render-scene))))
   (future (catch-and-print-ex (while true (tick))))

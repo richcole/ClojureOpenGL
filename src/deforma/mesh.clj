@@ -142,19 +142,19 @@
   ([tex pos dx dy]
     (let [mdx (vminus dx)
           mdy (vminus dy)]
-      {:elements    [0 1 2 0 3 2]
-       :vertices    (lv-to-list 
-                      [(vplus pos mdx dy)
-                       (vplus pos dx  dy)
-                       (vplus pos dx  mdy)
-                       (vplus pos mdx mdy)])
-       :tex-coords [0 1 
-                    1 1 
-                    1 0
-                    0 0]
-       :normals     (to-fbuf (lv-to-list (repeat 4 (vcross dx dy))))
-       :tex         tex
-       }))
+      (new-mesh {:elements    [0 1 2 0 3 2]
+                 :vertices    (lv-to-list 
+                                [(vplus pos mdx dy)
+                                 (vplus pos dx  dy)
+                                 (vplus pos dx  mdy)
+                                 (vplus pos mdx mdy)])
+                 :tex-coords [0 1 
+                              1 1 
+                              1 0
+                              0 0]
+                 :normals     (lv-to-list (repeat 4 (vcross dx dy)))
+                 :tex         tex
+       })))
   )
 
 (extend-type CompiledMesh Renderable

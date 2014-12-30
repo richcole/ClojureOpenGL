@@ -29,7 +29,7 @@
 
 (defn vcross [^Vector u ^Vector v] (.cross u v))
 
-(defn svtimes [^Float s ^Vector u] (.times u s))
+(defn svtimes [^Double s ^Vector u] (.times u s))
 
 (defn qvtimes [^Quaternion q ^Vector u] (.times q u))
 
