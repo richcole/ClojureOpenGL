@@ -199,8 +199,15 @@ public class Vector {
     if (getClass() != obj.getClass())
       return false;
     Vector other = (Vector) obj;
-    if (!Arrays.equals(v, other.v))
+    if ( ! (x() == other.x()) ) {
       return false;
+    }
+    if ( ! (y() == other.y()) ) {
+      return false;
+    }
+    if ( ! (z() == other.z()) ) {
+      return false;
+    }
     return true;
   }
 
@@ -232,6 +239,10 @@ public class Vector {
 
   public Vector modulo(double grain) {
     return new Vector(Math.floor(x() / grain)*grain, Math.floor(y() / grain)*grain, Math.floor(z() / grain)*grain, 1.0);
+  }
+  
+  public boolean leq(Vector other) {
+    return x() < other.x() && y() < other.y() && z() < other.z();
   }
   
 }

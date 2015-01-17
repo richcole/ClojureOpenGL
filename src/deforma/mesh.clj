@@ -206,25 +206,13 @@
           (CompiledAnimMesh. vbo tbo nbo bbo ibo qbuf pbuf dvbuf bbuf tex vao)
           )))
 
-(defrecord BoundingBox [lower upper])
-
-(defn bounding-box-reduce [[lower upper] v]
+(defn boundingbox-reduce [[lower upper] v]
   [(if (nil? lower) v (lmin lower v)) 
    (if (nil? upper) v (lmax upper v))])
 
-(defn mesh-bounding-box ^BoundingBox [^CompiledMesh mesh]
-  (let [[lower upper] (reduce bounding-box-reduce [nil nil] (partition 3 (to-list (.buf (.vbo mesh)))))] 
+(defn mesh-boundingbox ^BoundingBox [^CompiledMesh mesh]
+  (let [[lower upper] (reduce boundingbox-reduce [nil nil] (partition 3 (to-list (.buf (.vbo mesh)))))] 
 	  (BoundingBox. (apply vector lower) (apply vector upper))))
-
-(defn bounding-box-grow ^BoundingBox [^BoundingBox b scale]
-  (let [dx (svtimes scale (vplus U0 U1 U2))]
-    (BoundingBox. (vminus (:lower b) dx) (vplus (:upper b) dx))))
-
-(defn bounding-box-center ^Vector [^BoundingBox b]
-  (svtimes 0.5 (vplus (:lower b) (:upper b))))
-
-(defn bounding-box-du ^Vector [^BoundingBox b]
-  (svtimes 0.5 (vminus (:upper b) (:lower b))))
 
 (defn to-verticies [[[x1 x2] ys]]
   (let [p  (reduce (fn [p [s v]] (vplus p (svtimes s v))) ZERO ys)

@@ -37,7 +37,6 @@
 			<attribute name="optional" value="true"/>
 		</attributes>
 	</classpathentry>
-	<classpathentry combineaccessrules="false" kind="src" path="/clj-audio"/>
 	<classpathentry kind="lib" path="jars/jl1.0.1.jar"/>
 	<classpathentry kind="output" path="bin"/>
 </classpath>

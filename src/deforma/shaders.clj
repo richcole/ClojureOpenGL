@@ -23,10 +23,10 @@
   (use-program [program]
     (GL20/glUseProgram (gid program))))
 
-(defn throw-when-gl-error [get-status report]
+(defn throw-when-gl-error [resource get-status report]
     (when (== (get-status) GL11/GL_FALSE)
       (throw (RuntimeException. 
-              (str "OpenGL Error occured: " 
+              (str "OpenGL Error occured (" resource ": " 
                    (report (* 4 1024)))))))  
 
 (defn attach-shader [^Program program ^Shader shader]
@@ -35,7 +35,7 @@
 (defn link-program [^Program program]
   (let [id (gid program)]
     (GL20/glLinkProgram id)
-    (throw-when-gl-error #(GL20/glGetProgrami id GL20/GL_LINK_STATUS)
+    (throw-when-gl-error "program" #(GL20/glGetProgrami id GL20/GL_LINK_STATUS)
                          #(GL20/glGetProgramInfoLog id %))
     program))
 
@@ -45,7 +45,7 @@
     (assert (> id 0))
     (GL20/glShaderSource id (slurp (clojure.java.io/resource resource-name)))
     (GL20/glCompileShader id)
-    (throw-when-gl-error #(GL20/glGetShaderi id GL20/GL_COMPILE_STATUS)
+    (throw-when-gl-error resource-name #(GL20/glGetShaderi id GL20/GL_COMPILE_STATUS)
                          #(GL20/glGetShaderInfoLog id %))
     shader))
 

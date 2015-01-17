@@ -93,7 +93,7 @@
   (gl-do (dosync (ref-set tm (new-mesh (assoc m2 :tex @stone-texture)))))
   (gl-do (dosync (ref-set tm (new-triangle-mesh @stone-texture))))
  
-  (gl-do (println (mesh-bounding-box (new-mesh (assoc m2 :tex @stone-texture)))))
+  (gl-do (println (mesh-boundingbox (new-mesh (assoc m2 :tex @stone-texture)))))
   
   (vdot (.left @game-state) (.up @game-state))
   
@@ -107,9 +107,9 @@
    (gl-do (dosync (ref-set fb (new-frame-buffer 1024 1024))))
    (let [mesh @tree-mesh
          render #(render-objects mesh)
-         bb   (mesh-bounding-box mesh)
-         c    (bounding-box-center bb)
-         du   (bounding-box-du bb)
+         bb   (mesh-boundingbox mesh)
+         c    (boundingbox-center bb)
+         du   (boundingbox-du bb)
          fwd  U2
          up   U1
          left  (vcross up fwd)

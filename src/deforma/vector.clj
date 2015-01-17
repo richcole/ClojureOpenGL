@@ -1,6 +1,8 @@
 (ns deforma.vector
   (:import game.math.Quaternion game.math.Vector)
+  (:require [clojure.core.typed :as typed])
   (:gen-class))
+
 
 (defn new-vector [x y z]
   (Vector. x y z))
@@ -13,13 +15,21 @@
     (.fromAngles q x y z)))
 
 (def ZERO (Vector/Z))
+(typed/ann ZERO Vector)
+
 (def U0 (Vector/U1))
+(typed/ann U0 Vector)
+
 (def U1 (Vector/U2))
+(typed/ann U1 Vector)
+
 (def U2 (Vector/U3))
+(typed/ann U2 Vector)
 
 (defn vminus 
   ([^Vector v]   (.minus v))
   ([^Vector u ^Vector v] (.plus u (.minus v))))
+(typed/ann vminus (typed/Fn [Vector -> Vector]))
 
 (defn vplus 
   (^Vector [^Vector u ^Vector v] (.plus u v))
@@ -35,25 +45,39 @@
 
 (defn vdot [^Vector u ^Vector v] (.dot u v))
 
+(defn vlength ^Double [^Vector u]
+  (.length u))
+
+(defn vproject [^Vector u ^Vector v]
+  (svtimes (/ (vdot u v) (vlength v)) v))
+
 (defn q-to-list [^Quaternion q] (doall (map #(.get q %) (range 4))))
 
 (defn vx [u] (.x u)) 
 (defn vy [u] (.y u)) 
 (defn vz [u] (.z u))
 
-(defn vmin [^Vector a ^Vector b]
+(defn vmin ^Vector [^Vector a ^Vector b]
   (if (nil? a) b
 	  (Vector. 
 	    (min (vx a) (vx b))
 	    (min (vy a) (vy b))
 	    (min (vz a) (vz b)))))
+(typed/ann vmin [(Vector Vector) -> Vector])
 
-(defn vmax [^Vector a ^Vector b]
+(defn vmax ^Vector [^Vector a ^Vector b]
   (if (nil? a) b
 	  (Vector. 
 	    (max (vx a) (vx b))
 	    (max (vy a) (vy b))
 	    (max (vz a) (vz b)))))
+(typed/ann vmax [(Vector Vector) -> Vector])
+
+(defn vleq ^Boolean [^Vector a ^Vector b]
+  (.leq a b))
+
+(defn vgeq ^Boolean [^Vector a ^Vector b]
+  (.leq b a))
 
 (defn ldot [u v]
   (if (empty? u) 

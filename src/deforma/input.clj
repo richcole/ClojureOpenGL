@@ -1,13 +1,13 @@
 (ns deforma.input
+  (:use 
+    deforma.util
+    deforma.vector
+    deforma.state)
   (:import [org.lwjgl.opengl Display DisplayMode GL11 GL12 GL13 GL20 GL30 GL31]
            [org.lwjgl.util.glu GLU]
            [org.lwjgl.input Keyboard Mouse]
            deforma.state.State
            )
-  (:use 
-    deforma.util
-    deforma.vector
-    deforma.state)
   (:gen-class))
 
 (declare update-input-state)

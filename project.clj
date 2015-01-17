@@ -19,6 +19,9 @@
    [clj-audio "0.3.0-SNAPSHOT"]
 ;   [net.javazoom/jlayer "1.0.1"]
 ;   [net.javazoom/mp3spi "1.9.5"]
+
+  [org.clojure/core.typed "0.2.77"]
+  [net.mikera/cljunit "0.3.1"]
    
    [log4j/log4j "1.2.17"]
  	 [java3d/vecmath "1.3.1"]
@@ -28,8 +31,8 @@
 	 [gov.nist.math.jama/gov.nist.math.jama "1.1.1"]
    ]
   :repositories [["jme3" "http://updates.jmonkeyengine.org/maven/"]
-                 ["local" "file://c:/Users/Richard/ClojureRepo"
-                  "clojuresphere" "http://www.clojuresphere.com/"]]
+                 ["snapshots" "file:///home/local/ANT/richcole/LocalClojure"]
+                 ["releases" "file:///home/local/ANT/richcole/LocalClojure"]]
   :main deforma.core
   :target-path "target/%s"
   :profiles {:uberjar {:aot :all}}

@@ -1,4 +1,4 @@
-#version 420
+#version 430
 
 uniform sampler2D tex;
 varying vec2 t;
