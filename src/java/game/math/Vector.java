@@ -242,7 +242,7 @@ public class Vector {
   }
   
   public boolean leq(Vector other) {
-    return x() < other.x() && y() < other.y() && z() < other.z();
+    return x() <= other.x() && y() <= other.y() && z() <= other.z();
   }
   
 }

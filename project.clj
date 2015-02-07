@@ -16,7 +16,7 @@
 ;   [com.jme3/jme3-blender "3.0.10"]
 ;   [com.jme3/jme3-plugins "3.0.10"]
 
-   [clj-audio "0.3.0-SNAPSHOT"]
+;   [clj-audio "0.3.0-SNAPSHOT"]
 ;   [net.javazoom/jlayer "1.0.1"]
 ;   [net.javazoom/mp3spi "1.9.5"]
 

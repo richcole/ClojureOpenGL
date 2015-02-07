@@ -29,7 +29,8 @@
 
 (defn boundingbox-disjoint? ^Boolean [^BoundingBox u ^BoundingBox v]
   (let [bb (boundingbox-intersection u v)]
-    (not (vleq (.lower u) (.upper v)))))
+    (not (vleq (.lower bb) (.upper bb)))))
+(typed/ann boundingbox-disjoint? [BoundingBox BoundingBox -> Boolean])
 
 (defn boundingbox-covers? ^Boolean [^BoundingBox u ^BoundingBox v]
   (and (vleq (.lower u) (.lower v))
