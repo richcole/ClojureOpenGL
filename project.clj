@@ -3,6 +3,7 @@
   :url "http://example.com/FIXME"
   :license {:name "Apache 2.0"
             :url "http://www.apache.org/licenses/LICENSE-2.0.html"}
+  :jvm-opts ^:replace []
   :dependencies 
   [[org.clojure/clojure "1.5.1"]
    [org.lwjgl.lwjgl/lwjgl "2.9.0"]
@@ -20,15 +21,17 @@
 ;   [net.javazoom/jlayer "1.0.1"]
 ;   [net.javazoom/mp3spi "1.9.5"]
 
-  [org.clojure/core.typed "0.2.77"]
-  [net.mikera/cljunit "0.3.1"]
+   [org.clojure/core.typed "0.2.77"]
+   [net.mikera/cljunit "0.3.1"]
+
+   [criterium "0.4.3"]
    
    [log4j/log4j "1.2.17"]
- 	 [java3d/vecmath "1.3.1"]
-	 [com.google.inject/guice "3.0"]
-	 [com.google.guava/guava "13.0.1"]
-	 [com.google.code.gson/gson "2.2.4"]
-	 [gov.nist.math.jama/gov.nist.math.jama "1.1.1"]
+   [java3d/vecmath "1.3.1"]
+   [com.google.inject/guice "3.0"]
+   [com.google.guava/guava "13.0.1"]
+   [com.google.code.gson/gson "2.2.4"]
+   [gov.nist.math.jama/gov.nist.math.jama "1.1.1"]
    ]
   :repositories [["jme3" "http://updates.jmonkeyengine.org/maven/"]
                  ["snapshots" "file:///home/local/ANT/richcole/LocalClojure"]

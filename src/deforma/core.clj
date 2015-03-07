@@ -23,7 +23,7 @@
     deforma.state
     deforma.input
     deforma.buffers
-    deforma.nwn
+;    deforma.nwn
     deforma.gid)
   (:gen-class))
 
@@ -208,11 +208,34 @@
   (to-list (:normals @ta))
   @tm
 
-  (gl-do 
-   (let [tex (get-texture "stone_texture.jpg")
-         cm  (-> (terrain-map 500 100) (cube-mesh tex))
-         tm  (-> cm new-mesh compile-mesh)]
-   (dosync (ref-set tree-mesh tm))))
+
+  (bench (-> (terrain-map 50 50) cube-mesh))
+
+  (let [cm  (-> (terrain-map 50 50) cube-mesh)]
+    (gl-do 
+     (let [tex (get-texture "stone_texture.jpg")
+           tm  (-> (merge cm {:tex tex}) new-mesh compile-mesh)]
+       (dosync (ref-set tree-mesh tm)))))
+
+  (dosync (ref-set tree-mesh (new-renderable-map)))
+
+  (doseq [i (range 5) j (range 5)] 
+    (let [sx (* i 10)
+          sy (* j 10)
+          ex (+ sx 10)
+          ey (+ sy 10)
+          cm (-> (terrain-map sx sy ex ey) cube-mesh)]
+      (gl-do 
+       (println "render" i j)
+       (let [tex (get-texture "stone_texture.jpg")
+             tm  (-> (merge cm {:tex tex}) new-mesh compile-mesh)]
+         (renderable-map-put (deref tree-mesh) [i j] tm)))))
+
+  (let [cm (-> (terrain-map 10 10 20 20) cube-mesh)]
+    (gl-do 
+     (let [tex (get-texture "stone_texture.jpg")
+           tm  (-> (merge cm {:tex tex}) new-mesh compile-mesh)]
+       (renderable-map-put (deref tree-mesh) [1 1] tm))))
 
   (dosync ref-set tree-mesh nil)
 

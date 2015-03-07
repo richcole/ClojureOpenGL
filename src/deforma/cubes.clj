@@ -5,9 +5,7 @@
 
 (defrecord Block [])
 
-(defrecord Cubes [blocks bb])
-
-(def cubes (ref (Cubes. {} [100 100 100])))
+(defrecord Cubes [blocks])
 
 (defn assoc-concat [m [k v]] 
   (assoc m k [(get m k []) v]))
@@ -26,8 +24,7 @@
   (apply concat (map key cube-pairs)))
 
 (defn faces [^Cubes cubes]
-  (let [bb (:bb cubes)
-        cube-pairs (doall 
+  (let [cube-pairs (doall 
                     (filter #(not (nil? %))
                      (for [[p b] (:blocks cubes) [d0 d1 d2] cube-dirns]
                        (when (not (= (has-block cubes p) (has-block cubes (vplus p d0))))
@@ -38,10 +35,10 @@
      :normals (join-fields cube-pairs :normals)
      }))
 
-(defn add-cube [cubes p]
+(defn add-cube [^Cubes cubes p]
   (assoc-in cubes [:blocks p] (Block.)))
 
-(defn cube-mesh [cubes tex]
+(defn cube-mesh [^Cubes cubes]
   (let [faces (faces cubes)
         num-vertices (count (:vertices faces))
         vbuf  (BufferUtils/createFloatBuffer (* 3 num-vertices))
@@ -72,8 +69,7 @@
     (.flip ebuf)
     (.flip tbuf)
     (.flip nbuf)
-    {:vertices vbuf :normals nbuf :elements ebuf 
-     :tex-coords tbuf :tex tex}
+    {:vertices vbuf :normals nbuf :elements ebuf :tex-coords tbuf}
     ))
 
 (defn avg [ & rest ]
@@ -106,16 +102,20 @@
 
 
 
-(defn cubes-from-height-map [hm bb]
-  (let [solid-blocks (for [x (range 0 (nth bb 0))
-                           z (range 0 (nth bb 1))
+(defn cubes-from-height-map [hm x1 z1 x2 z2]
+  (let [solid-blocks (for [x (range x1 x2)
+                           z (range z1 z2)
                            y (range 0 (get hm [x z]))]
                          (new-vector x y z))
         blocks (reduce (fn [m p] (assoc m p (Block.))) {} solid-blocks)]
-    (Cubes. blocks bb)))
+    (Cubes. blocks)))
 
-(defn terrain-map [dx dy]
-  (cubes-from-height-map (height-map {} 0 0 dx dy 2.0 2.0 2.0 2.0) [dx dy]))
+(defn terrain-map 
+  ([ex ey]
+     (terrain-map 0 0 ex ey))
+  ([sx sy ex ey]
+     (let [hm (height-map {} sx sy ex ey 2.0 2.0 2.0 2.0)]
+       (cubes-from-height-map hm sx sy ex ey))))
 
 
 
