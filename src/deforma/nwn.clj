@@ -1,6 +1,6 @@
 (ns deforma.nwn
   (:use 
-    clj-audio.core 
+;    clj-audio.core 
     clojure.java.io 
     deforma.vector
     deforma.mesh

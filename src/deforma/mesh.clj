@@ -13,6 +13,7 @@
            game.math.Quaternion 
            game.math.Vector
            deforma.shaders.Programs
+           deforma.boundingbox.BoundingBox
            )
   (:gen-class)
   )
@@ -68,7 +69,8 @@
                    b
                    tex])
 
-(defn new-mesh [{:keys [vertices elements tex tex-coords normals]}]
+(defn new-mesh [{:keys [vertices elements tex texture-filename 
+                        tex-coords normals]}]
   (Mesh. vertices elements tex tex-coords normals))
 
 (defn new-transform [{:keys [rot tr]}]
@@ -158,7 +160,7 @@
   )
 
 (extend-type CompiledMesh Renderable
-  (render [mesh ^Programs programs]
+  (render [^CompiledMesh mesh ^Programs programs]
     (use-program (.simple-program programs))
     (GL13/glActiveTexture GL13/GL_TEXTURE0)
     (GL11/glBindTexture GL11/GL_TEXTURE_2D (gid (.tex mesh)))

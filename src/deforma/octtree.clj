@@ -5,7 +5,7 @@
 
 (defrecord OctTree [^BoundingBox bounds children items depth])
 
-(defn ot-new 
+(defn new-octtree 
   ([bounds] (OctTree. bounds [] [] 1))
   ([bounds depth] (OctTree. bounds [] [] depth)))
 
@@ -23,7 +23,7 @@
                                      (fn [[s u]] (svtimes s (vproject du u))) 
                                      [[sx U0] [sy U1] [sz U2]]))))))))
 
-(defn ot-insert [^OctTree tree ^BoundingBox bb value max-depth]
+(defn octtree-insert [^OctTree tree ^BoundingBox bb value max-depth]
   (if (boundingbox-disjoint? (.bounds tree) bb)
     tree
     (if (>= (.depth tree) max-depth) 
@@ -34,13 +34,13 @@
               children (if (empty? children) 
                          (gen-children (.bounds tree))
                          children)
-              children (map #(insert % bb value max-depth) children)]
+              children (map #(octtree-insert % bb value max-depth) children)]
           (assoc tree :children children))))))
 
 (defn select-items [bb items]
   (filter (fn [[item-bb item]] (not (boundingbox-disjoint? item-bb bb))) items))
 
-(defn ot-find [^OctTree tree ^BoundingBox bb]
+(defn octtree-find [^OctTree tree ^BoundingBox bb]
   (if (boundingbox-disjoint? bb (.bounds tree) bb)
     '()
     (let [node-items  (select-items bb (.items tree))

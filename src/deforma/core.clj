@@ -80,7 +80,7 @@
   (future (catch-and-print-ex (while true (tick))))
 )
 
-(when nil  
+(comment
 
   (-main)
   (reset-state)
@@ -203,12 +203,27 @@
   (def ta (ref nil))
   (gl-do (dosync (ref-set ta (new-triangle-anim-node-mesh @stone-texture))))
 
+  (dosync (ref-set tm nil))
+
   (to-list (:normals @ta))
   @tm
 
   (gl-do 
-   (dosync 
-    (ref-set tree-mesh (new-mesh (cube-mesh (terrain-map 10 10))))))
+   (let [tex (get-texture "stone_texture.jpg")
+         cm  (-> (terrain-map 500 100) (cube-mesh tex))
+         tm  (-> cm new-mesh compile-mesh)]
+   (dosync (ref-set tree-mesh tm))))
+
+  (dosync ref-set tree-mesh nil)
+
+  (gl-do
+   (let [tex (get-texture "stone_texture.jpg")
+         cm  (-> (terrain-map 10 10) (cube-mesh tex))
+         tm  (-> cm new-mesh compile-mesh)]
+     (println "tex" (:tex cm))))
+   
+
+  (dosync (ref-set tree-mesh nil))
 
   (java.lang.System/gc)
   

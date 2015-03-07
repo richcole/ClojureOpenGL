@@ -41,7 +41,7 @@
 (defn add-cube [cubes p]
   (assoc-in cubes [:blocks p] (Block.)))
 
-(defn cube-mesh [cubes]
+(defn cube-mesh [cubes tex]
   (let [faces (faces cubes)
         num-vertices (count (:vertices faces))
         vbuf  (BufferUtils/createFloatBuffer (* 3 num-vertices))
@@ -73,7 +73,7 @@
     (.flip tbuf)
     (.flip nbuf)
     {:vertices vbuf :normals nbuf :elements ebuf 
-     :tex-coords tbuf :texture-filename "stone_texture.jpg"}
+     :tex-coords tbuf :tex tex}
     ))
 
 (defn avg [ & rest ]

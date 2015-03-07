@@ -21,7 +21,7 @@
 
 (deftest insert-test
   (is (not (boundingbox-disjoint? B1 B2)))
-  (let [tree (insert (new-octtree B1) B2 :x 4)]
+  (let [tree (octtree-insert (new-octtree B1) B2 :x 4)]
     (= 1 (count (find tree B2))) 
     ))
 
