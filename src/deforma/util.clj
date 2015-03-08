@@ -50,3 +50,18 @@
     (for [[y ys] (selections xs)
           zs (permutations ys (- k 1))]
       (cons y zs))))
+
+
+(defn arg-min [f coll]
+  (first 
+   (reduce (fn [[mx mv] x] 
+            (let [v (f x)]
+              (if (nil? mx) [x v]
+                  (if (< v mv)
+                    [x v]
+                    [mx mv]))))
+          nil
+          coll)))
+
+
+                

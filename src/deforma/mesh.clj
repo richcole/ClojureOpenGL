@@ -5,7 +5,7 @@
         deforma.vector
         deforma.gid
         deforma.util
-        deforma.boundingbox
+        deforma.geom
         )
   (:import [org.lwjgl.opengl GL11 GL12 GL13 GL15 GL20 GL21 GL30 GL31]
            deforma.textures.Texture
@@ -14,7 +14,7 @@
            game.math.Quaternion 
            game.math.Vector
            deforma.shaders.Programs
-           deforma.boundingbox.BoundingBox
+           deforma.geom.Cube
            )
   (:gen-class)
   )
@@ -228,13 +228,13 @@
           (CompiledAnimMesh. vbo tbo nbo bbo ibo qbuf pbuf dvbuf bbuf tex vao)
           )))
 
-(defn boundingbox-reduce [[lower upper] v]
+(defn cube-reduce [[lower upper] v]
   [(if (nil? lower) v (lmin lower v)) 
    (if (nil? upper) v (lmax upper v))])
 
-(defn mesh-boundingbox ^BoundingBox [^CompiledMesh mesh]
-  (let [[lower upper] (reduce boundingbox-reduce [nil nil] (partition 3 (to-list (.buf (.vbo mesh)))))] 
-	  (BoundingBox. (apply vector lower) (apply vector upper))))
+(defn mesh-cube ^Cube [^CompiledMesh mesh]
+  (let [[lower upper] (reduce cube-reduce [nil nil] (partition 3 (to-list (.buf (.vbo mesh)))))] 
+	  (Cube. (apply vector lower) (apply vector upper))))
 
 (defn to-verticies [[[x1 x2] ys]]
   (let [p  (reduce (fn [p [s v]] (vplus p (svtimes s v))) ZERO ys)

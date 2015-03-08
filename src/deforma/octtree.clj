@@ -1,21 +1,21 @@
 (ns deforma.octtree
-  (:use deforma.boundingbox deforma.vector)
-  (:import deforma.boundingbox.BoundingBox)
+  (:use deforma.geom deforma.vector)
+  (:import deforma.geom.Cube)
   (:gen-class))
 
-(defrecord OctTree [^BoundingBox bounds children items depth])
+(defrecord OctTree [^Cube bounds children items depth])
 
 (defn new-octtree 
   ([bounds] (OctTree. bounds [] [] 1))
   ([bounds depth] (OctTree. bounds [] [] depth)))
 
 (defn gen-children [bb]
-  (let [du     (boundingbox-du bb)
-        center (boundingbox-center bb)]
+  (let [du     (cube-du bb)
+        center (cube-center bb)]
     (for [sx [1.0 -1.0]
           sy [1.0 -1.0] 
           sz [1.0 -1.0]]   
-      (new-octtree (boundingbox-of
+      (new-octtree (cube-of
                      center
                      (vplus center 
                             (apply vplus 
@@ -23,12 +23,12 @@
                                      (fn [[s u]] (svtimes s (vproject du u))) 
                                      [[sx U0] [sy U1] [sz U2]]))))))))
 
-(defn octtree-insert [^OctTree tree ^BoundingBox bb value max-depth]
-  (if (boundingbox-disjoint? (.bounds tree) bb)
+(defn octtree-insert [^OctTree tree ^Cube bb value max-depth]
+  (if (cube-disjoint? (.bounds tree) bb)
     tree
     (if (>= (.depth tree) max-depth) 
       (assoc tree :items (cons (.items tree) [bb value]))
-      (if (boundingbox-covers? bb (.bounds tree))
+      (if (cube-covers? bb (.bounds tree))
         (assoc tree :items (cons (.items tree) [bb value]))
         (let [children (.children tree)
               children (if (empty? children) 
@@ -38,10 +38,10 @@
           (assoc tree :children children))))))
 
 (defn select-items [bb items]
-  (filter (fn [[item-bb item]] (not (boundingbox-disjoint? item-bb bb))) items))
+  (filter (fn [[item-bb item]] (not (cube-disjoint? item-bb bb))) items))
 
-(defn octtree-find [^OctTree tree ^BoundingBox bb]
-  (if (boundingbox-disjoint? bb (.bounds tree) bb)
+(defn octtree-find [^OctTree tree ^Cube bb]
+  (if (cube-disjoint? bb (.bounds tree) bb)
     '()
     (let [node-items  (select-items bb (.items tree))
           children-items (reduce (fn [result child] 

@@ -1,0 +1,21 @@
+
+a line l is (l0 + alpha l1)
+a plane p has the equation that (p . pn) = c
+
+can get a characteristic equation for a line by having zero distance
+to the projection of a point onto the line.
+
+so (l0 + alpha l1) . (pn) = c
+   alpha = (c - l0.pn) / (l1.pn)
+
+plug back into the line
+
+  l0 + ((c - l0.pn) / (l1.pn)) l1
+
+then ask whether or not that points falls within the bounds of the plane.
+
+Now for a rectangular array of cubes many of the line are in common
+
+Conside a plane at p0 with normal U_i. The dot products contain
+individual multiplies.
+

@@ -93,7 +93,7 @@
   (gl-do (dosync (ref-set tm (new-mesh (assoc m2 :tex @stone-texture)))))
   (gl-do (dosync (ref-set tm (new-triangle-mesh @stone-texture))))
  
-  (gl-do (println (mesh-boundingbox (new-mesh (assoc m2 :tex @stone-texture)))))
+  (gl-do (println (mesh-cube (new-mesh (assoc m2 :tex @stone-texture)))))
   
   (vdot (.left @game-state) (.up @game-state))
   
@@ -107,9 +107,9 @@
    (gl-do (dosync (ref-set fb (new-frame-buffer 1024 1024))))
    (let [mesh @tree-mesh
          render #(render-objects mesh)
-         bb   (mesh-boundingbox mesh)
-         c    (boundingbox-center bb)
-         du   (boundingbox-du bb)
+         bb   (mesh-cube mesh)
+         c    (cube-center bb)
+         du   (cube-du bb)
          fwd  U2
          up   U1
          left  (vcross up fwd)
@@ -191,12 +191,6 @@
   (defn random-blocks [n]
     (doall (for [x (range 0 n)]
              (new-vector (rand-int 10) (rand-int 10) (rand-int 10)))))
-  (gl-do 
-   (dosync 
-    (ref-set cubes 
-             (reduce add-cube @cubes (random-blocks 5)))
-    (add-cube @cubes (new-vector 0 1 1))
-    (ref-set tree-mesh (new-mesh (cube-mesh @cubes)))))
 
   (gl-do (dosync (ref-set tm (new-mesh (new-triangle-anim-node-mesh @stone-texture)))))
 

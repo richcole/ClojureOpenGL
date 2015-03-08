@@ -1,11 +1,29 @@
 (ns deforma.cubes
-  (:use deforma.vector deforma.face)
-  (:import org.lwjgl.BufferUtils)
+  (:use deforma.vector deforma.face deforma.mesh deforma.geom deforma.util)
+  (:import org.lwjgl.BufferUtils 
+           deforma.geom.Cube 
+           deforma.geom.Line
+           deforma.mesh.CompiledMesh 
+           )
   (:gen-class))
 
-(defrecord Block [])
+(deftype Block [])
 
-(defrecord Cubes [blocks])
+(deftype Cubes [blocks])
+
+(deftype CubeArray [^Cubes cubes ^Cube bb ^CompiledMesh mesh]
+  Renderable
+  (render [self programs]
+    (render mesh programs)))
+
+(defn cube-array-cubes [^CubeArray ca]
+  (for [[point block] (.blocks (.cubes ca))]
+    (Cube. (.minus point U123) (.plus point U123))))
+
+(defn cube-array-line-pick [^CubeArray ca ^Line line]
+  (when (cube-line-intersect? (.bb ca) line)
+    (arg-min #(vdistsq (.p0 line) (cube-center %)) 
+             (filter #(cube-line-intersect? % line) (cube-array-cubes ca)))))
 
 (defn assoc-concat [m [k v]] 
   (assoc m k [(get m k []) v]))
@@ -14,7 +32,7 @@
   (reduce assoc-concat x y))
 
 (defn has-block [cubes p]
-  (not (nil? (get (:blocks cubes) p))))
+  (not (nil? (get (.blocks cubes) p))))
 
 (def cube-dirns 
   [[U0 U1 U2] [U1 U0 U2] [U2 U0 U1]
@@ -26,7 +44,7 @@
 (defn faces [^Cubes cubes]
   (let [cube-pairs (doall 
                     (filter #(not (nil? %))
-                     (for [[p b] (:blocks cubes) [d0 d1 d2] cube-dirns]
+                     (for [[p b] (.blocks cubes) [d0 d1 d2] cube-dirns]
                        (when (not (= (has-block cubes p) (has-block cubes (vplus p d0))))
                          (new-face (svtimes 2.0 p) d0 d1 d2)))))
         ]
@@ -34,9 +52,6 @@
      :tex-coords (join-fields cube-pairs :tex-coords)
      :normals (join-fields cube-pairs :normals)
      }))
-
-(defn add-cube [^Cubes cubes p]
-  (assoc-in cubes [:blocks p] (Block.)))
 
 (defn cube-mesh [^Cubes cubes]
   (let [faces (faces cubes)
