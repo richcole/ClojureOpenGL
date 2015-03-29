@@ -1,5 +1,10 @@
 (ns deforma.cubes
-  (:use deforma.vector deforma.face deforma.mesh deforma.geom deforma.util)
+  (:use deforma.vector 
+        deforma.face 
+        deforma.mesh 
+        deforma.geom 
+        deforma.util
+        deforma.render)
   (:import org.lwjgl.BufferUtils 
            deforma.geom.Cube 
            deforma.geom.Line

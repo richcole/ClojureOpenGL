@@ -32,6 +32,8 @@
    [com.google.guava/guava "13.0.1"]
    [com.google.code.gson/gson "2.2.4"]
    [gov.nist.math.jama/gov.nist.math.jama "1.1.1"]
+
+   [cz.advel.jbullet/jbullet "20101010-1"]
    ]
   :repositories [["jme3" "http://updates.jmonkeyengine.org/maven/"]
                  ["snapshots" "file:///home/local/ANT/richcole/LocalClojure"]

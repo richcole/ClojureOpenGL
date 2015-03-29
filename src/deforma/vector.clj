@@ -14,16 +14,6 @@
   (let [q (quaternion)]
     (.fromAngles q x y z)))
 
-(def ZERO (Vector/Z))
-
-(def U0 (Vector/U1))
-
-(def U1 (Vector/U2))
-
-(def U2 (Vector/U3))
-
-(def U123 (vplus U0 U1 U2))
-
 (defn vminus 
   ([^Vector v]   (.minus v))
   ([^Vector u ^Vector v] (.plus u (.minus v))))
@@ -40,6 +30,10 @@
 
 (defn qvtimes [^Quaternion q ^Vector u] (.times q u))
 
+(defn qtimes [^Quaternion p ^Vector q] (.times p q))
+
+(defn sqtimes [^Double s ^Quaternion p] (.times p s))
+
 (defn vdot [^Vector u ^Vector v] (.dot u v))
 
 (defn vlength ^Double [^Vector u]
@@ -47,6 +41,9 @@
 
 (defn vproject [^Vector u ^Vector v]
   (svtimes (/ (vdot u v) (vlength v)) v))
+
+(defn vnormalize [^Vector v]
+  (svtimes (/ 1.0 (vlength)) v))
 
 (defn q-to-list [^Quaternion q] (doall (map #(.get q %) (range 4))))
 
@@ -107,6 +104,16 @@
 
 (defn lv-to-list [vs]
   (apply concat (map (fn [v] [(vx v) (vy v) (vz v)]) vs)))
+
+(def ZERO (Vector/Z))
+
+(def U0 (Vector/U1))
+
+(def U1 (Vector/U2))
+
+(def U2 (Vector/U3))
+
+(def U123 (vplus U0 U1 U2))
 
 (comment
   (lv-to-list [(new-vector 1.0 2.0 3.0)])

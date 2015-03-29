@@ -23,21 +23,17 @@
     deforma.state
     deforma.input
     deforma.buffers
+    deforma.render
 ;    deforma.nwn
     deforma.gid)
   (:gen-class))
+
+(defonce renderable-map (new-renderable-map))
 
 (defn render-objects [& rest]
   (doseq [x rest]
 	  (if (and x @programs)
 	    (render x @programs))))
-
-(defn basic-render []
-  (view-clear)
-  (let [{:keys [pos fwd up]} @game-state]
-    (look-at pos (vplus pos fwd) up))
-  (render-objects @tm @tree-mesh)
-)
 
 (defn render-scene []
   (GL11/glViewport 0 0 display-width display-height)
@@ -49,7 +45,7 @@
        up (.up @game-state)]
    (look-at pos (vplus pos fwd) up))
 
- (render-objects @tree-mesh @tm @anim-mesh) 
+  (render-objects renderable-map) 
   (Display/update)
 )
 
@@ -67,14 +63,15 @@
   (gl-init)
   (gl-compile-shaders)
   (gl-load-textures)
-  (gl-do (dosync (ref-set tm 
-                   (compile-mesh (new-triangle-mesh @stone-texture)))))
-  (gl-do (dosync (ref-set anim-mesh 
-                   (compile-mesh (new-triangle-anim-mesh @stone-texture)))))
-  (gl-do (dosync (ref-set tree-mesh 
-                   (compile-mesh (new-square-mesh @stone-texture
-                                   ZERO (svtimes 1 U0) (svtimes 1 U1))))))
-  
+  (gl-do
+   (renderable-map-put renderable-map :tr1
+                       (compile-mesh (new-triangle-mesh @stone-texture)))
+   (renderable-map-put renderable-map :tr2
+                       (compile-mesh (new-triangle-anim-mesh @stone-texture)))
+   (renderable-map-put renderable-map :tr3
+                       (compile-mesh (new-square-mesh @stone-texture
+                                   ZERO (svtimes 1 U0) (svtimes 1 U1)))))
+  (renderable-map-keys renderable-map)
 
   (future (while true (gl-do (render-scene))))
   (future (catch-and-print-ex (while true (tick))))
@@ -213,6 +210,9 @@
 
   (dosync (ref-set tree-mesh (new-renderable-map)))
 
+  (def cubeland (new-renderable-map))
+  (renderable-map-put renderable-map :cubeland cubeland)
+
   (doseq [i (range 5) j (range 5)] 
     (let [sx (* i 10)
           sy (* j 10)
@@ -220,10 +220,9 @@
           ey (+ sy 10)
           cm (-> (terrain-map sx sy ex ey) cube-mesh)]
       (gl-do 
-       (println "render" i j)
        (let [tex (get-texture "stone_texture.jpg")
              tm  (-> (merge cm {:tex tex}) new-mesh compile-mesh)]
-         (renderable-map-put (deref tree-mesh) [i j] tm)))))
+         (renderable-map-put cubeland [i j] tm)))))
 
   (let [cm (-> (terrain-map 10 10 20 20) cube-mesh)]
     (gl-do 

@@ -6,6 +6,7 @@
         deforma.gid
         deforma.util
         deforma.geom
+        deforma.render
         )
   (:import [org.lwjgl.opengl GL11 GL12 GL13 GL15 GL20 GL21 GL30 GL31]
            deforma.textures.Texture
@@ -19,30 +20,9 @@
   (:gen-class)
   )
 
-(defprotocol Renderable
-  (render [self ^Programs programs])
-)
-
 (defprotocol Compilable
   (compile-mesh [self])
 )
-
-(deftype RenderableMap [items-ref]
-  Renderable
-  (render [self programs]
-    (doseq [[key item] (deref items-ref)] (render item programs))))
-
-(defn new-renderable-map []
-  (RenderableMap. (ref {})))
-
-(defn renderable-map-put [rm key item]
-  (dosync 
-   (let [items-ref (.items-ref rm)
-         items (deref items-ref)]
-     (ref-set items-ref (assoc items key item)))))
-
-(defn renderable-ref-set [ref item]
-  (dosync (ref-set (.item-ref ref) item)))
 
 (deftype Transform [^Quaternion rot ^Vector tr])
 
