@@ -70,7 +70,11 @@
 (defn new-mesh [{:keys [vertices elements tex texture-filename 
                         tex-coords normals]}]
   (assert tex)
-  (assert (and vertices elements tex tex-coords normals))
+  (assert vertices)
+  (assert elements)
+  (assert tex)
+  (assert tex-coords)
+  (assert normals)
   (Mesh. vertices elements tex tex-coords normals))
 
 (defn new-transform [{:keys [rot tr]}]

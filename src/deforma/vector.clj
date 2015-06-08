@@ -43,7 +43,7 @@
   (svtimes (/ (vdot u v) (vlength v)) v))
 
 (defn vnormalize [^Vector v]
-  (svtimes (/ 1.0 (vlength)) v))
+  (svtimes (/ 1.0 (vlength v)) v))
 
 (defn q-to-list [^Quaternion q] (doall (map #(.get q %) (range 4))))
 
@@ -104,6 +104,9 @@
 
 (defn lv-to-list [vs]
   (apply concat (map (fn [v] [(vx v) (vy v) (vz v)]) vs)))
+
+(defn lv-to-xy-list [vs]
+  (apply concat (map (fn [v] [(vx v) (vy v)]) vs)))
 
 (def ZERO (Vector/Z))
 

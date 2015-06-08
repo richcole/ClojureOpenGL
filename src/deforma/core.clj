@@ -24,7 +24,8 @@
     deforma.input
     deforma.buffers
     deforma.render
-;    deforma.nwn
+;;    deforma.nwn
+    deforma.voxel
     deforma.gid)
   (:gen-class))
 
@@ -79,6 +80,43 @@
 
 (comment
 
+  (-main)
+
+  (renderable-map-clear renderable-map)
+  (let [df (new-additive-density-field
+            [(new-spherical-density-field ZERO 10.0)
+             (new-spherical-density-field (svtimes 6.0 U1) 10.0)])
+        p0 ZERO
+        dp (svtimes 8.0 U123)
+        p1 (vplus p0 (svtimes -1 dp))
+        p2 (vplus p0 (svtimes 1 dp))
+        faces (cube-faces-over df p1 p2 1.0)
+        mesh (new-mesh (mesh-from-faces faces @stone-texture))]
+    (gl-do
+     (renderable-map-put renderable-map :tr4
+                         (compile-mesh mesh))))
+  
+  ;;
+  (let [p (svtimes 3.0 U1)]
+    (gl-do
+     (renderable-map-put
+      renderable-map :sp1
+      (compile-mesh
+       (new-square-mesh @stone-texture
+                        p (svtimes 1.0 U0) (svtimes 1.0 U1))))
+     (renderable-map-put
+      renderable-map :sp2
+      (compile-mesh
+       (new-square-mesh @stone-texture
+                        p (svtimes 1.0 U0) (svtimes 1.0 U2))))
+     (renderable-map-put
+      renderable-map :sp3
+      (compile-mesh
+       (new-square-mesh @stone-texture
+                        p (svtimes 1.0 U1) (svtimes 1.0 U2))))
+     ))
+   
+  
   (-main)
   (reset-state)
   
@@ -137,8 +175,6 @@
 
    (def tm2 (ref nil))
    (gl-do (dosync (ref-set tm (new-mesh (box-mesh @stone-texture ZERO U0 U1 U2)))))
-   
-
    
    (gl-do (view-init))
 
